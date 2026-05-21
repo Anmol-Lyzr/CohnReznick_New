@@ -157,13 +157,9 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const headerLabel = isCustomClient
-          ? liveConfigured
-            ? "Custom client → Lyzr inference API"
-            : "Custom client (configure LYZR_API_KEY + LYZR_AGENT_ID)"
-          : mode === "live"
-            ? "Live Lyzr Agent"
-            : "Demo (configure LYZR_API_KEY + LYZR_AGENT_ID for live)";
+        const headerLabel = liveConfigured
+          ? "Live Lyzr inference API"
+          : "Demo (configure LYZR_API_KEY + LYZR_AGENT_ID for live)";
 
         controller.enqueue(
           encoder.encode(

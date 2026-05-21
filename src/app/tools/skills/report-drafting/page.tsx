@@ -16,7 +16,7 @@ import { SAMPLE_INPUTS, loadSampleOutput } from "@/lib/sample-data";
 export default function ReportDrafting() {
   const { state, execute, loadSampleData } = useAdvisoryJourney();
   const { getEngagementAnalysis } = useAdvisoryAnalysis();
-  const { engagementName, setEngagementName, engagementNames, customNames } = useEngagementSelection();
+  const { engagementName, setEngagementName, engagementNames } = useEngagementSelection();
   const mountedEngagementRef = useRef<string | null>(null);
 
   const displayAnalysis = useCallback(
@@ -81,7 +81,6 @@ export default function ReportDrafting() {
           value={engagementName}
           onChange={setEngagementName}
           names={engagementNames}
-          customNames={customNames}
           variant="inline"
         />
       }

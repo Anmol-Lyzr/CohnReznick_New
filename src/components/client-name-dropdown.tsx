@@ -11,10 +11,7 @@ export const NEW_CLIENT_OPTION_VALUE = "__new_client__";
 interface ClientNameDropdownProps {
   value: string;
   onChange: (name: string) => void;
-  /** Full list of selectable names (built-ins + any persisted custom). */
   names: string[];
-  /** Subset of `names` representing custom (webhook-ingested) clients — rendered in a separate group. */
-  customNames?: string[];
   className?: string;
   /** Match parameters card field layout */
   variant?: "inline" | "field";
@@ -24,16 +21,11 @@ export function ClientNameDropdown({
   value,
   onChange,
   names,
-  customNames,
   className,
   variant = "field",
 }: ClientNameDropdownProps) {
   const isCustomName = Boolean(value && !names.includes(value));
   const [creatingNew, setCreatingNew] = useState(isCustomName);
-
-  const customSet = new Set(customNames ?? []);
-  const builtInNames = names.filter((n) => !customSet.has(n));
-  const customGroupNames = (customNames ?? []).filter((n) => names.includes(n));
 
   useEffect(() => {
     if (isCustomName) setCreatingNew(true);
@@ -80,30 +72,11 @@ export function ClientNameDropdown({
         title="Select client"
         aria-label="Client"
       >
-        {customGroupNames.length > 0 ? (
-          <>
-            <optgroup label="Built-in clients">
-              {builtInNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Custom clients">
-              {customGroupNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </optgroup>
-          </>
-        ) : (
-          names.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))
-        )}
+        {names.map((name) => (
+          <option key={name} value={name}>
+            {name}
+          </option>
+        ))}
         <option value={NEW_CLIENT_OPTION_VALUE}>New client…</option>
       </select>
       <ChevronDown

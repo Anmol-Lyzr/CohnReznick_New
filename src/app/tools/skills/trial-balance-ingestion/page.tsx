@@ -10,7 +10,7 @@ import { SAMPLE_INPUTS, loadSampleOutput } from "@/lib/sample-data";
 
 export default function TrialBalanceIngestion() {
   const { state, execute, loadSampleData } = useAdvisoryJourney();
-  const { engagementName, setEngagementName, profile, engagementNames, customNames } = useEngagementSelection();
+  const { engagementName, setEngagementName, profile, engagementNames } = useEngagementSelection();
   const [file, setFile] = useState<File | undefined>();
 
   const applySample = async () => {
@@ -52,7 +52,6 @@ export default function TrialBalanceIngestion() {
             value={engagementName}
             onChange={setEngagementName}
             names={engagementNames}
-            customNames={customNames}
             variant="field"
           />
           <ToolbarFileInput

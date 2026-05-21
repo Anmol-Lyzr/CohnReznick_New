@@ -15,7 +15,7 @@ import { SAMPLE_INPUTS, loadSampleOutput } from "@/lib/sample-data";
 export default function DriverAnalysis() {
   const { state, execute, loadSampleData } = useAdvisoryJourney();
   const { getEngagementAnalysis, setAnalysis } = useAdvisoryAnalysis();
-  const { engagementName, setEngagementName, engagementNames, customNames } = useEngagementSelection();
+  const { engagementName, setEngagementName, engagementNames } = useEngagementSelection();
   const mountedEngagementRef = useRef<string | null>(null);
 
   const displayAnalysis = useCallback(
@@ -85,7 +85,6 @@ export default function DriverAnalysis() {
           value={engagementName}
           onChange={setEngagementName}
           names={engagementNames}
-          customNames={customNames}
           variant="inline"
         />
       }
