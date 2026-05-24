@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
@@ -62,19 +63,32 @@ interface AdvisoryContextValue {
 
 const AdvisoryContext = createContext<AdvisoryContextValue | null>(null);
 
-export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) {
+function ActiveClientFromSearchParams({
+  onClient,
+}: {
+  onClient: (client: string) => void;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const client = searchParams.get("client")?.trim();
+    if (client) onClient(client);
+  }, [pathname, searchParams, onClient]);
+
+  return null;
+}
+
+export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) {
   const [engagementStore, setEngagementStore] = useState<EngagementAnalysisStore>({});
   const [sourceDocsByClient, setSourceDocsByClient] = useState<Record<string, string[]>>({});
   const [mongoConfigured, setMongoConfigured] = useState(false);
   const [activeClient, setActiveClient] = useState<string | null>(null);
   const [storeVersion, setStoreVersion] = useState(0);
 
-  useEffect(() => {
-    const client = searchParams.get("client")?.trim();
-    if (client) setActiveClient(client);
-  }, [pathname, searchParams]);
+  const syncActiveClientFromSearchParams = useCallback((client: string) => {
+    setActiveClient(client);
+  }, []);
 
   useEffect(() => {
     const local = purgeRemovedEngagements(loadEngagementStore());
@@ -253,7 +267,14 @@ export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) 
     ]
   );
 
-  return <AdvisoryContext.Provider value={value}>{children}</AdvisoryContext.Provider>;
+  return (
+    <AdvisoryContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <ActiveClientFromSearchParams onClient={syncActiveClientFromSearchParams} />
+      </Suspense>
+      {children}
+    </AdvisoryContext.Provider>
+  );
 }
 
 export function useAdvisoryAnalysis(): AdvisoryContextValue {
