@@ -10,6 +10,7 @@ import { useAdvisoryAnalysis } from "@/context/AdvisoryAnalysisProvider";
 import { formatSkillMarkdown } from "@/lib/advisory-mappers";
 import { getAnalysisForEngagement, isKnownEngagement } from "@/lib/engagement-analysis";
 import { syncReportFromIssues } from "@/lib/analysis-mutations";
+import { resolvePoCSampleEngagement } from "@/lib/client-sample-guard";
 import { SAMPLE_INPUTS, loadSampleOutput } from "@/lib/sample-data";
 
 const DEFAULT_FOCUS = ["Revenue", "Payroll", "AR", "Costs", "Margin"];
@@ -40,8 +41,13 @@ export default function AnomalyDetection() {
 
   const applySample = async () => {
     const s = SAMPLE_INPUTS["anomaly-detection"];
-    setEngagementName(s.engagementName as string);
-    const name = s.engagementName as string;
+    const params = new URLSearchParams(window.location.search);
+    const name = resolvePoCSampleEngagement(
+      params.get("client"),
+      (s.engagementName as string) || engagementName
+    );
+    if (!name) return;
+    setEngagementName(name);
     const { activities, output, analysis } = await loadSampleOutput("anomaly-detection", name);
     const synced = syncReportFromIssues(analysis);
     setAnalysis(synced);
@@ -65,7 +71,8 @@ export default function AnomalyDetection() {
   }, [engagementName, getEngagementAnalysis, setAnalysis, displayAnalysis]);
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("sample") === "true") applySample();
+    if (new URLSearchParams(window.location.search).get("sample") !== "true") return;
+    void applySample();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

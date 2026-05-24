@@ -1,33 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DEFAULT_ENGAGEMENT_NAME,
   ENGAGEMENT_NAMES,
   ENGAGEMENT_STORAGE_KEY,
   getEngagementByName,
+  isRemovedEngagement,
   type EngagementProfile,
 } from "@/lib/customer-management";
 import { useAdvisoryAnalysis } from "@/context/AdvisoryAnalysisProvider";
+import { normalizeEngagementInput, resolveEngagementName } from "@/lib/removed-engagements";
 
 function resolveInitialName(clientParam: string | null): string {
-  if (clientParam?.trim()) return clientParam.trim();
   if (typeof window !== "undefined") {
     const stored = localStorage.getItem(ENGAGEMENT_STORAGE_KEY)?.trim();
-    if (stored) return stored;
+    if (clientParam != null && clientParam !== "") {
+      return normalizeEngagementInput(clientParam);
+    }
+    if (stored) return normalizeEngagementInput(stored);
+    return resolveEngagementName(null);
   }
-  return DEFAULT_ENGAGEMENT_NAME;
+  return resolveEngagementName(clientParam);
 }
 
 export function useEngagementSelection() {
   const router = useRouter();
   const { engagementStore } = useAdvisoryAnalysis();
   const [engagementName, setEngagementNameState] = useState(DEFAULT_ENGAGEMENT_NAME);
+  const urlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setEngagementNameState(resolveInitialName(params.get("client")));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (urlTimerRef.current) clearTimeout(urlTimerRef.current);
+    };
   }, []);
 
   const profile: EngagementProfile | undefined = getEngagementByName(engagementName);
@@ -35,7 +47,7 @@ export function useEngagementSelection() {
   const customNames = useMemo(
     () =>
       Object.keys(engagementStore)
-        .filter((name) => name && !ENGAGEMENT_NAMES.includes(name))
+        .filter((name) => name && !ENGAGEMENT_NAMES.includes(name) && !isRemovedEngagement(name))
         .sort((a, b) => a.localeCompare(b)),
     [engagementStore]
   );
@@ -51,16 +63,12 @@ export function useEngagementSelection() {
     return out;
   }, [customNames]);
 
-  const setEngagementName = useCallback(
+  const syncUrl = useCallback(
     (name: string) => {
-      setEngagementNameState(name);
-      const trimmed = name.trim();
-      if (trimmed) {
-        localStorage.setItem(ENGAGEMENT_STORAGE_KEY, trimmed);
-      }
       const params = new URLSearchParams(window.location.search);
-      if (trimmed) {
-        params.set("client", trimmed);
+      const normalized = normalizeEngagementInput(name);
+      if (normalized) {
+        params.set("client", normalized);
       } else {
         params.delete("client");
       }
@@ -68,6 +76,31 @@ export function useEngagementSelection() {
       router.replace(`${window.location.pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
     [router]
+  );
+
+  const setEngagementName = useCallback(
+    (name: string) => {
+      setEngagementNameState(name);
+
+      const forStorage = normalizeEngagementInput(name);
+      if (forStorage) {
+        localStorage.setItem(ENGAGEMENT_STORAGE_KEY, forStorage);
+      } else {
+        localStorage.removeItem(ENGAGEMENT_STORAGE_KEY);
+      }
+
+      if (urlTimerRef.current) clearTimeout(urlTimerRef.current);
+
+      const isExistingBuiltIn = ENGAGEMENT_NAMES.includes(name.trim());
+      const delay = name === "" || isExistingBuiltIn ? 0 : 250;
+
+      if (delay === 0) {
+        syncUrl(name);
+      } else {
+        urlTimerRef.current = setTimeout(() => syncUrl(name), delay);
+      }
+    },
+    [syncUrl]
   );
 
   return {

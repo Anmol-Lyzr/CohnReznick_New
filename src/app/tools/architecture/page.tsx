@@ -48,7 +48,7 @@ const ARCHITECTURE_LAYERS = [
       "issue-log.md",
       "diligence-report-draft.md",
     ],
-    description: "Per-engagement workspace — isolated under workspace/cohnreznick-poc/.",
+    description: "Per-engagement workspace — isolated under workspace/advisory/.",
   },
   {
     title: "Data & AI Layer",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ActionRequiredButton, AnomalyDetailModal } from "@/components/anomaly-review-panel";
 import {
@@ -17,7 +17,14 @@ import {
   getReportableIssues,
 } from "@/lib/analysis-mutations";
 import { useAdvisoryAnalysis } from "@/context/AdvisoryAnalysisProvider";
-import type { AdvisoryAnalysisOutput, FollowUpQuestion, IssueLogEntry, Severity } from "@/lib/advisory-output-types";
+import type {
+  AdvisoryAnalysisOutput,
+  AgentResponseMeta,
+  FollowUpQuestion,
+  IssueLogEntry,
+  Severity,
+} from "@/lib/advisory-output-types";
+import type { AgentV2Status } from "@/lib/advisory-agent-v2-types";
 import { badge, flag, stat, gradientAccent, gradientAccentBorder } from "@/lib/theme-classes";
 
 const SEVERITY_STYLES: Record<Severity, { bg: string; text: string; border: string }> = {
@@ -132,8 +139,18 @@ function AnomalyDetectionView({
   const pendingCount = issues.filter((i) => i.review_status === "PENDING_REVIEW").length;
   const acceptedCount = issues.filter((i) => ["APPROVED", "EDITED"].includes(i.review_status)).length;
 
+  useEffect(() => {
+    const openFirstPending = () => {
+      const first = data.issue_log.find((i) => i.review_status === "PENDING_REVIEW");
+      if (first) setModalIssueId(first.issue_id);
+    };
+    window.addEventListener("agent-shell:open-review", openFirstPending);
+    return () => window.removeEventListener("agent-shell:open-review", openFirstPending);
+  }, [data.issue_log]);
+
   return (
-    <div>
+    <div id="skill-output-review">
+      {data._agent_meta && <AgentResponseBanner meta={data._agent_meta} />}
       <OutputHeader
         analysis={data}
         skillTitle="Trend & Anomaly Detection"
@@ -200,7 +217,7 @@ function AnomalyDetectionView({
                 <td className="px-3 py-2.5">
                   <SeverityBadge severity={i.severity} />
                 </td>
-                <td className="px-3 py-2.5 text-muted-foreground">{(Math.abs(i.mom_pct_change) * 4.2).toFixed(1)}σ</td>
+                <td className="px-3 py-2.5 text-muted-foreground">{formatZScoreEstimate(i)}</td>
                 <td className="px-3 py-2.5">
                   <ActionRequiredButton issue={i} onClick={() => setModalIssueId(i.issue_id)} />
                 </td>
@@ -641,12 +658,14 @@ function IssueTrackerView({
 
 function ReportDraftingView({ data }: { data: AdvisoryAnalysisOutput }) {
   const r = data.report;
+  const v2 = data._agent_v2_raw;
   const approved = getReportableIssues(data);
   const pending = data.issue_log.filter((i) => i.review_status === "PENDING_REVIEW").length;
   const rejected = data.issue_log.filter((i) => i.review_status === "REJECTED").length;
 
   return (
     <div>
+      {data._agent_meta && <AgentResponseBanner meta={data._agent_meta} />}
       <OutputHeader
         analysis={data}
         skillTitle="Diligence Report Draft"
@@ -666,7 +685,27 @@ function ReportDraftingView({ data }: { data: AdvisoryAnalysisOutput }) {
         <>
           <div className="rounded-xl border-2 border-success/25 bg-success/[0.04] p-4 mb-4">
             <h3 className="text-xs font-bold uppercase text-success mb-2">Executive Summary</h3>
-            <p className="text-sm text-foreground/90 leading-relaxed">{r.executive_summary}</p>
+            <p className="text-sm text-foreground/90 leading-relaxed">
+              {v2?.report_summary?.executive_summary || r.executive_summary}
+            </p>
+            {v2?.report_summary?.key_risks && v2.report_summary.key_risks.length > 0 && (
+              <ul className="mt-3 text-xs text-foreground/80 space-y-1 list-disc pl-4">
+                {v2.report_summary.key_risks.map((risk) => (
+                  <li key={risk}>{risk}</li>
+                ))}
+              </ul>
+            )}
+            {data._agent_meta?.recommended_next_steps &&
+              data._agent_meta.recommended_next_steps.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-success/20">
+                  <p className="text-[10px] font-bold uppercase text-success mb-1">Recommended next steps</p>
+                  <ul className="text-xs text-foreground/80 space-y-1 list-disc pl-4">
+                    {data._agent_meta.recommended_next_steps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
           </div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-success mb-2">
             Approved findings only
@@ -699,20 +738,115 @@ function ReportDraftingView({ data }: { data: AdvisoryAnalysisOutput }) {
   );
 }
 
+const AGENT_STATUS_STYLES: Record<AgentV2Status, string> = {
+  success: "bg-success/10 text-success border-success/25",
+  warning: "bg-warning/15 text-warning border-warning/30",
+  error: "bg-destructive/12 text-destructive border-destructive/25",
+};
+
+function agentBadgeLabel(agentMode: "live" | "demo" | null | undefined, data: AdvisoryAnalysisOutput): string {
+  if (data._agent_meta || data._agent_v2_raw) return "Live Lyzr Agent";
+  if (agentMode === "live") return "Live Lyzr Agent";
+  return "PoC sample";
+}
+
+function formatZScoreEstimate(issue: AdvisoryAnalysisOutput["issue_log"][0]): string {
+  if (typeof issue.z_score_estimate === "number" && Number.isFinite(issue.z_score_estimate)) {
+    return `${issue.z_score_estimate.toFixed(1)}σ`;
+  }
+  return `${(Math.abs(issue.mom_pct_change) * 4.2).toFixed(1)}σ`;
+}
+
+function AgentResponseBanner({ meta }: { meta: AgentResponseMeta }) {
+  const statusStyle = AGENT_STATUS_STYLES[meta.status] ?? AGENT_STATUS_STYLES.success;
+  return (
+    <div className="mb-4 rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={cn("inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase", statusStyle)}>
+          {meta.status}
+        </span>
+        <span className="text-xs font-semibold text-foreground">{meta.agent_name}</span>
+        <span className="text-[10px] text-muted-foreground">{meta.agent_role}</span>
+      </div>
+      {meta.audit_trail && (
+        <p className="text-[10px] text-muted-foreground">
+          Generated {new Date(meta.audit_trail.generated_timestamp).toLocaleString()} ·{" "}
+          {meta.audit_trail.generated_by}
+          {meta.file_name ? ` · ${meta.file_name}` : ""}
+        </p>
+      )}
+      {meta.cta_actions.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {meta.cta_actions.map((cta) => (
+            <button
+              key={cta.action}
+              type="button"
+              title={cta.description.join(" ")}
+              className={cn(
+                "text-[10px] font-semibold px-2.5 py-1 rounded-md border",
+                cta.variant === "primary"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border/60"
+              )}
+            >
+              {cta.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExecutiveSummaryBlock({ summary }: { summary: string }) {
+  if (!summary.trim()) return null;
+  return (
+    <div className="mb-4 rounded-xl border border-primary/20 bg-primary/[0.04] p-3">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-primary mb-2">Executive summary</h3>
+      <p className="text-xs text-foreground/85 leading-relaxed whitespace-pre-wrap">{summary}</p>
+    </div>
+  );
+}
+
 function TrialBalanceView({ data }: { data: AdvisoryAnalysisOutput }) {
   const e = data.engagement;
+  const v2 = data._agent_v2_raw;
+  const tbMeta = data._agent_meta?.trial_balance ?? v2?.trial_balance;
+  const ingestionStatus =
+    tbMeta?.ingestion_status?.trim() ||
+    (data._agent_v2_raw ? "Ingested — ready for anomaly detection" : "Ready for anomaly detection");
   return (
     <div>
+      {data._agent_meta && <AgentResponseBanner meta={data._agent_meta} />}
       <OutputHeader
         analysis={data}
         skillTitle="Trial Balance Normalization Summary"
         accent={cn(gradientAccent, gradientAccentBorder)}
       />
+      {v2?.report_summary?.executive_summary && (
+        <ExecutiveSummaryBlock summary={v2.report_summary.executive_summary} />
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-        <StatCard label="Months" value={e.total_months} color={stat.default} />
-        <StatCard label="Accounts" value={e.total_accounts_parsed} color={stat.muted} />
-        <StatCard label="Warnings" value={data.summary_stats.parse_warnings} color={stat.warning} />
-        <StatCard label="Materiality" value={`$${(e.materiality_threshold / 1000).toFixed(0)}K`} color={stat.default} />
+        <StatCard
+          label="Months"
+          value={v2?.analysis_summary?.months_analyzed ?? e.total_months}
+          color={stat.default}
+        />
+        <StatCard
+          label="Accounts"
+          value={v2?.analysis_summary?.accounts_analyzed ?? e.total_accounts_parsed}
+          color={stat.muted}
+        />
+        <StatCard
+          label="Findings"
+          value={v2?.analysis_summary?.material_findings_count ?? data.summary_stats.total_issues}
+          color={stat.warning}
+        />
+        <StatCard
+          label="High severity"
+          value={v2?.analysis_summary?.high_severity_issues ?? data.summary_stats.high_severity}
+          color={stat.default}
+        />
       </div>
       <DataTable
         headerClass="bg-primary/15"
@@ -722,7 +856,15 @@ function TrialBalanceView({ data }: { data: AdvisoryAnalysisOutput }) {
           ["Deal type", e.deal_type],
           ["Anomaly threshold", fmtPct(e.anomaly_pct_threshold)],
           ["Currency", e.currency],
-          ["Status", <span key="status" className="text-success font-bold">Ready for anomaly detection</span>],
+          [
+            "Status",
+            <span key="status" className="text-success font-bold">
+              {ingestionStatus}
+            </span>,
+          ],
+          ...(tbMeta?.readiness_message
+            ? [["Readiness", tbMeta.readiness_message] as [string, string]]
+            : []),
         ]}
       />
       {data.parse_warnings.length > 0 && (
@@ -756,10 +898,13 @@ export function SkillOutputView({
         <span
           className={cn(
             "inline-block mb-2 text-[10px] font-semibold px-2 py-0.5 rounded-full",
-            agentMode === "live" ? "bg-success/10 text-success border border-success/20" : "bg-muted text-muted-foreground"
+            (agentMode === "live" && (analysis._agent_meta || analysis._agent_v2_raw)) ||
+              analysis._agent_v2_raw
+              ? "bg-success/10 text-success border border-success/20"
+              : "bg-muted text-muted-foreground border border-border/40"
           )}
         >
-          {agentMode === "live" ? "Live Lyzr Agent" : "Demo / fallback"}
+          {agentBadgeLabel(agentMode, analysis)}
         </span>
       )}
       {skill === "trial-balance-ingestion" && <TrialBalanceView data={analysis} />}

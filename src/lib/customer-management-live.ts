@@ -21,6 +21,7 @@ import {
   type SkillId,
   type SkillStageMetadata,
 } from "@/lib/customer-management";
+import { filterEngagementSourceDocs } from "@/lib/source-documents";
 
 export interface LiveEngagementRow {
   profile: EngagementProfile;
@@ -121,11 +122,11 @@ export function buildLiveEngagementRows(
 ): LiveEngagementRow[] {
   const builtInRows = ENGAGEMENT_PROFILES.map((profile) => {
     const analysis = store[profile.clientName] ?? null;
-    const extraDocs = sourceDocsByClient[profile.clientName] ?? [];
-    const mergedProfile =
-      extraDocs.length > 0
-        ? { ...profile, sourceDocs: [...new Set([...profile.sourceDocs, ...extraDocs])] }
-        : profile;
+    const extraDocs = filterEngagementSourceDocs(sourceDocsByClient[profile.clientName] ?? []);
+    const mergedProfile = {
+      ...profile,
+      sourceDocs: filterEngagementSourceDocs([...profile.sourceDocs, ...extraDocs]),
+    };
     if (analysis) return applyAnalysisToProfile(mergedProfile, analysis);
     return {
       profile: mergedProfile,

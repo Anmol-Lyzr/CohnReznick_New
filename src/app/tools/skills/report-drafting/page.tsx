@@ -11,6 +11,7 @@ import { formatSkillMarkdown } from "@/lib/advisory-mappers";
 import { syncReportFromIssues } from "@/lib/analysis-mutations";
 import { getAnalysisForEngagement, isKnownEngagement } from "@/lib/engagement-analysis";
 import type { AdvisoryAnalysisOutput } from "@/lib/advisory-output-types";
+import { resolvePoCSampleEngagement } from "@/lib/client-sample-guard";
 import { SAMPLE_INPUTS, loadSampleOutput } from "@/lib/sample-data";
 
 export default function ReportDrafting() {
@@ -36,8 +37,14 @@ export default function ReportDrafting() {
 
   const applySample = async () => {
     const s = SAMPLE_INPUTS["report-drafting"];
-    setEngagementName(s.engagementName as string);
-    const { activities, analysis } = await loadSampleOutput("report-drafting", s.engagementName as string);
+    const params = new URLSearchParams(window.location.search);
+    const name = resolvePoCSampleEngagement(
+      params.get("client"),
+      (s.engagementName as string) || engagementName
+    );
+    if (!name) return;
+    setEngagementName(name);
+    const { activities, analysis } = await loadSampleOutput("report-drafting", name);
     const data = syncReportFromIssues(analysis);
     loadSampleData(activities, formatSkillMarkdown("report-drafting", data), "report-drafting", data);
   };
@@ -56,7 +63,8 @@ export default function ReportDrafting() {
   }, [engagementName, getEngagementAnalysis, displayAnalysis]);
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("sample") === "true") applySample();
+    if (new URLSearchParams(window.location.search).get("sample") !== "true") return;
+    void applySample();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

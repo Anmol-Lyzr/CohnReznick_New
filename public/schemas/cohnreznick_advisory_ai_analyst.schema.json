@@ -1,0 +1,425 @@
+{
+  "name": "cohnreznick_advisory_ai_analyst",
+  "strict": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "agent_name": { "type": "string", "description": "Name of the advisory AI agent" },
+      "agent_role": { "type": "string", "description": "Role assigned to the AI agent" },
+      "status": {
+        "type": "string",
+        "description": "Execution status of the agent",
+        "enum": ["success", "warning", "error"]
+      },
+      "engagement": {
+        "type": "object",
+        "description": "Engagement metadata shown in page headers and TB summary",
+        "properties": {
+          "engagement_ref": { "type": "string" },
+          "client_name": { "type": "string" },
+          "deal_type": { "type": "string" },
+          "period_start": { "type": "string" },
+          "period_end": { "type": "string" },
+          "total_months": { "type": "integer" },
+          "currency": { "type": "string" },
+          "materiality_threshold": { "type": "number" },
+          "anomaly_pct_threshold": { "type": "number" }
+        },
+        "additionalProperties": false,
+        "required": [
+          "engagement_ref",
+          "client_name",
+          "deal_type",
+          "period_start",
+          "period_end",
+          "total_months",
+          "currency",
+          "materiality_threshold",
+          "anomaly_pct_threshold"
+        ]
+      },
+      "trial_balance": {
+        "type": "object",
+        "description": "Trial balance ingestion summary for TB page",
+        "properties": {
+          "ingestion_status": { "type": "string" },
+          "readiness_message": { "type": "string" }
+        },
+        "additionalProperties": false,
+        "required": ["ingestion_status", "readiness_message"]
+      },
+      "analysis_summary": {
+        "type": "object",
+        "properties": {
+          "files_processed": { "type": "integer" },
+          "months_analyzed": { "type": "integer" },
+          "accounts_analyzed": { "type": "integer" },
+          "material_findings_count": { "type": "integer" },
+          "high_severity_issues": { "type": "integer" },
+          "medium_severity_issues": { "type": "integer" },
+          "low_severity_issues": { "type": "integer" },
+          "parse_warnings_count": { "type": "integer" },
+          "suppressed_anomalies_count": { "type": "integer" },
+          "total_questions": { "type": "integer" },
+          "unexplained_count": { "type": "integer" },
+          "needs_immediate_attention_count": { "type": "integer" },
+          "workpaper_notes_matched": { "type": "integer" }
+        },
+        "additionalProperties": false,
+        "required": [
+          "files_processed",
+          "months_analyzed",
+          "accounts_analyzed",
+          "material_findings_count",
+          "high_severity_issues",
+          "medium_severity_issues",
+          "low_severity_issues",
+          "parse_warnings_count",
+          "suppressed_anomalies_count",
+          "total_questions",
+          "unexplained_count",
+          "needs_immediate_attention_count",
+          "workpaper_notes_matched"
+        ]
+      },
+      "parse_warnings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "warning_type": {
+              "type": "string",
+              "enum": ["missing_period", "duplicate_account", "format_error", "inferred_account_type"]
+            },
+            "account_code": { "type": "string" },
+            "period": { "type": "string" },
+            "detail": { "type": "string" }
+          },
+          "additionalProperties": false,
+          "required": ["warning_type", "account_code", "period", "detail"]
+        }
+      },
+      "suppressed_anomalies": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "account_code": { "type": "string" },
+            "account_name": { "type": "string" },
+            "period": { "type": "string" },
+            "flag_type": {
+              "type": "string",
+              "enum": ["SPIKE", "TREND", "REVERSAL", "STEP_CHANGE", "MARGIN_COMPRESSION"]
+            },
+            "absolute_delta": { "type": "number" },
+            "suppression_reason": { "type": "string" }
+          },
+          "additionalProperties": false,
+          "required": [
+            "account_code",
+            "account_name",
+            "period",
+            "flag_type",
+            "absolute_delta",
+            "suppression_reason"
+          ]
+        }
+      },
+      "findings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "finding_id": { "type": "string" },
+            "display_order": { "type": "integer" },
+            "title": { "type": "string" },
+            "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+            "materiality": { "type": "string" },
+            "account_name": { "type": "string" },
+            "account_code": { "type": "string" },
+            "account_type": {
+              "type": "string",
+              "enum": ["Asset", "Liability", "Equity", "Revenue", "COGS", "OpEx", "Other"]
+            },
+            "period": { "type": "string" },
+            "period_start": { "type": "string" },
+            "period_end": { "type": "string" },
+            "change_percentage": { "type": "number" },
+            "absolute_delta": { "type": "number" },
+            "mom_pct_change": { "type": "number" },
+            "baseline_avg": { "type": "number" },
+            "peak_value": { "type": "number" },
+            "z_score_estimate": { "type": "number" },
+            "flag_type": {
+              "type": "string",
+              "enum": ["SPIKE", "TREND", "REVERSAL", "STEP_CHANGE", "MARGIN_COMPRESSION"]
+            },
+            "direction": { "type": "string", "enum": ["UP", "DOWN"] },
+            "summary": { "type": "string" },
+            "driver_analysis": {
+              "type": "object",
+              "properties": {
+                "primary_driver": { "type": "string" },
+                "confidence_score": { "type": "number" },
+                "driver_category": {
+                  "type": "string",
+                  "enum": [
+                    "Calendar",
+                    "Contract",
+                    "Cost_Inflation",
+                    "Collections",
+                    "Legal",
+                    "Campaign",
+                    "Tax",
+                    "Reclassification",
+                    "Unexplained",
+                    "Other"
+                  ]
+                },
+                "recurrence_type": {
+                  "type": "string",
+                  "enum": ["ONE_TIME", "RECURRING", "UNKNOWN"]
+                },
+                "confidence": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+                "driver_status": {
+                  "type": "string",
+                  "enum": ["PENDING", "VALIDATED", "CHALLENGED", "INSUFFICIENT"]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "primary_driver",
+                "confidence_score",
+                "driver_category",
+                "recurrence_type",
+                "confidence",
+                "driver_status"
+              ]
+            },
+            "is_unexplained": { "type": "boolean" },
+            "needs_immediate_attention": { "type": "boolean" },
+            "correlated_accounts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "account_code": { "type": "string" },
+                  "account_name": { "type": "string" },
+                  "correlation_direction": { "type": "string", "enum": ["SAME", "INVERSE"] },
+                  "correlation_note": { "type": "string" }
+                },
+                "additionalProperties": false,
+                "required": ["account_code", "account_name", "correlation_direction", "correlation_note"]
+              }
+            },
+            "management_questions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "question_id": { "type": "string" },
+                  "question_text": { "type": "string" },
+                  "priority": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "category": {
+                    "type": "string",
+                    "enum": ["Revenue", "Cost", "Working_Capital", "Payroll", "Legal", "Other"]
+                  },
+                  "question_type": {
+                    "type": "string",
+                    "enum": ["Investigative", "Confirmation", "Documentation", "Run_Rate"]
+                  },
+                  "requires_documentation": { "type": "boolean" },
+                  "context_note": { "type": "string" },
+                  "agenda_status": {
+                    "type": "string",
+                    "enum": ["PENDING", "INCLUDED", "DEFERRED", "EXCLUDED", "EDITED"]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "question_id",
+                  "question_text",
+                  "priority",
+                  "category",
+                  "question_type",
+                  "requires_documentation",
+                  "context_note",
+                  "agenda_status"
+                ]
+              }
+            },
+            "source_traceability": {
+              "type": "object",
+              "properties": {
+                "file_name": { "type": "string" },
+                "sheet_name": { "type": "string" },
+                "row_numbers": { "type": "array", "items": { "type": "integer" } }
+              },
+              "additionalProperties": false,
+              "required": ["file_name", "sheet_name", "row_numbers"]
+            },
+            "workpaper_ref": { "type": "string" },
+            "workpaper_excerpt": { "type": "string" },
+            "review_status": {
+              "type": "string",
+              "enum": ["pending_review", "approved", "rejected", "requires_revision"]
+            },
+            "reviewer_comment": { "type": "string" },
+            "tracker_status": {
+              "type": "string",
+              "enum": ["PENDING", "CONFIRMED", "ESCALATED", "RESOLVED"]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "finding_id",
+            "display_order",
+            "title",
+            "severity",
+            "materiality",
+            "account_name",
+            "account_code",
+            "account_type",
+            "period",
+            "period_start",
+            "period_end",
+            "change_percentage",
+            "absolute_delta",
+            "mom_pct_change",
+            "baseline_avg",
+            "peak_value",
+            "z_score_estimate",
+            "flag_type",
+            "direction",
+            "summary",
+            "driver_analysis",
+            "is_unexplained",
+            "needs_immediate_attention",
+            "correlated_accounts",
+            "management_questions",
+            "source_traceability",
+            "workpaper_ref",
+            "workpaper_excerpt",
+            "review_status",
+            "reviewer_comment",
+            "tracker_status"
+          ]
+        }
+      },
+      "issue_tracker": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "issue_id": { "type": "string" },
+            "linked_finding_id": { "type": "string" },
+            "severity": { "type": "string" },
+            "status": { "type": "string" },
+            "owner": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false,
+          "required": ["issue_id", "linked_finding_id", "severity", "status", "owner"]
+        }
+      },
+      "report_summary": {
+        "type": "object",
+        "properties": {
+          "executive_summary": { "type": "string" },
+          "key_risks": { "type": "array", "items": { "type": "string" } },
+          "recommended_next_steps": { "type": "array", "items": { "type": "string" } },
+          "findings_detail": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "issue_id": { "type": "string" },
+                "observation": { "type": "string" },
+                "driver": { "type": "string" },
+                "implications": { "type": "string" },
+                "follow_up_questions": { "type": "array", "items": { "type": "string" } },
+                "source_refs": { "type": "array", "items": { "type": "string" } }
+              },
+              "additionalProperties": false,
+              "required": ["issue_id", "observation", "driver", "implications", "follow_up_questions", "source_refs"]
+            }
+          },
+          "issue_table": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "issue_number": { "type": "string" },
+                "account": { "type": "string" },
+                "period": { "type": "string" },
+                "movement": { "type": "string" },
+                "driver": { "type": "string" },
+                "severity": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+                "primary_question": { "type": "string" }
+              },
+              "additionalProperties": false,
+              "required": ["issue_number", "account", "period", "movement", "driver", "severity", "primary_question"]
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "executive_summary",
+          "key_risks",
+          "recommended_next_steps",
+          "findings_detail",
+          "issue_table"
+        ]
+      },
+      "cta_actions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "label": { "type": "string" },
+            "action": { "type": "string" },
+            "variant": { "type": "string" },
+            "description": { "type": "array", "items": { "type": "string" } },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "review_required": { "type": "boolean" },
+                "next_stage": { "type": "string" }
+              },
+              "additionalProperties": false,
+              "required": ["review_required", "next_stage"]
+            }
+          },
+          "additionalProperties": false,
+          "required": ["label", "action", "variant", "description", "payload"]
+        }
+      },
+      "audit_trail": {
+        "type": "object",
+        "properties": {
+          "generated_by": { "type": "string" },
+          "review_required": { "type": "boolean" },
+          "generated_timestamp": { "type": "string" },
+          "source_traceability_enabled": { "type": "boolean" }
+        },
+        "additionalProperties": false,
+        "required": ["generated_by", "review_required", "generated_timestamp", "source_traceability_enabled"]
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "agent_name",
+      "agent_role",
+      "status",
+      "engagement",
+      "trial_balance",
+      "analysis_summary",
+      "parse_warnings",
+      "suppressed_anomalies",
+      "findings",
+      "issue_tracker",
+      "report_summary",
+      "cta_actions",
+      "audit_trail"
+    ]
+  }
+}

@@ -5,6 +5,7 @@ import type {
   Severity,
 } from "@/lib/advisory-output-types";
 import type { DashboardInsight, EngagementData, ReviewFinding, ReviewStatus } from "@/lib/types";
+import { getEngagementByName } from "@/lib/customer-management";
 import { DEMO_ENGAGEMENT } from "@/lib/cohnreznick-metadata";
 
 function formatCurrency(n: number, currency = "USD"): string {
@@ -95,16 +96,21 @@ export function toDashboardInsights(analysis: AdvisoryAnalysisOutput): Dashboard
   return fromIssues;
 }
 
-export function toEngagementCard(analysis: AdvisoryAnalysisOutput): EngagementData {
+export function toEngagementCard(
+  analysis: AdvisoryAnalysisOutput,
+  /** Store/profile key — unique even when analysis.engagement.client_name differs */
+  clientKey?: string
+): EngagementData {
   const pending = analysis.issue_log.some((i) => i.review_status === "PENDING_REVIEW");
   const approved = analysis.issue_log.some((i) =>
     ["APPROVED", "EDITED"].includes(i.review_status)
   );
+  const client = clientKey?.trim() || analysis.engagement.client_name;
   return {
-    id: analysis.engagement.engagement_ref,
-    client: analysis.engagement.client_name,
+    id: client,
+    client,
     type: analysis.engagement.deal_type,
-    industry: DEMO_ENGAGEMENT.industry,
+    industry: getEngagementByName(analysis.engagement.client_name)?.industry ?? DEMO_ENGAGEMENT.industry,
     lastActivity: new Date(analysis.engagement.report_generated_at).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",

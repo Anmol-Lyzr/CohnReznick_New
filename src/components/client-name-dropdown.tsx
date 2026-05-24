@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FormField, FormInput } from "@/components/journey-layout";
@@ -26,28 +26,48 @@ export function ClientNameDropdown({
 }: ClientNameDropdownProps) {
   const isCustomName = Boolean(value && !names.includes(value));
   const [creatingNew, setCreatingNew] = useState(isCustomName);
+  const [draftName, setDraftName] = useState(value);
+  const wasCreatingRef = useRef(creatingNew);
 
   useEffect(() => {
     if (isCustomName) setCreatingNew(true);
   }, [isCustomName]);
+
+  useEffect(() => {
+    if (creatingNew) {
+      if (!wasCreatingRef.current) {
+        setDraftName(value);
+      }
+    } else {
+      setDraftName(value);
+    }
+    wasCreatingRef.current = creatingNew;
+  }, [value, creatingNew]);
 
   const selectValue = creatingNew && !isCustomName ? NEW_CLIENT_OPTION_VALUE : value;
 
   const handleSelectChange = (next: string) => {
     if (next === NEW_CLIENT_OPTION_VALUE) {
       setCreatingNew(true);
+      setDraftName("");
       onChange("");
       return;
     }
     setCreatingNew(false);
+    setDraftName(next);
+    onChange(next);
+  };
+
+  const handleDraftChange = (next: string) => {
+    setDraftName(next);
     onChange(next);
   };
 
   const select = creatingNew ? (
     <div className="flex min-w-0 flex-col gap-1.5">
       <FormInput
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={draftName}
+        onChange={(e) => handleDraftChange(e.target.value)}
         placeholder="Enter client name"
         aria-label="New client name"
         autoFocus
@@ -56,7 +76,9 @@ export function ClientNameDropdown({
         type="button"
         onClick={() => {
           setCreatingNew(false);
-          onChange(names[0] ?? "");
+          const existing = names[0] ?? "";
+          setDraftName(existing);
+          onChange(existing);
         }}
         className="self-start text-[10px] font-medium text-primary hover:underline"
       >

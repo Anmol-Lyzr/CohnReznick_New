@@ -3,6 +3,7 @@ import type { AdvisoryAnalysisOutput } from "@/lib/advisory-output-types";
 import { formatSkillMarkdown } from "@/lib/advisory-mappers";
 import { SKILL_ACTIVITIES } from "@/lib/mock-outputs";
 import { DEMO_ENGAGEMENT } from "@/lib/cohnreznick-metadata";
+import { canLoadPoCSample } from "@/lib/client-sample-guard";
 import { getAnalysisForEngagement } from "@/lib/engagement-analysis";
 import { syncReportFromIssues } from "@/lib/analysis-mutations";
 
@@ -38,6 +39,9 @@ export async function loadSampleOutput(
   const sampleInputs = SAMPLE_INPUTS[skill] || { engagementName: DEMO_ENGAGEMENT.client };
 
   const name = (engagementName || (sampleInputs.engagementName as string) || DEMO_ENGAGEMENT.client) as string;
+  if (!canLoadPoCSample(name)) {
+    throw new Error("PoC sample data is only available for built-in engagements.");
+  }
   const analysis = syncReportFromIssues(getAnalysisForEngagement(name));
   const formatted = formatSkillMarkdown(skill, analysis);
 
@@ -46,7 +50,7 @@ export async function loadSampleOutput(
   }
 
   try {
-    const res = await fetch(`/api/agent/files?path=workspace/${DEMO_ENGAGEMENT.workspace}/${fileName}`);
+    const res = await fetch(`/api/agent/files?path=workspace/advisory/${fileName}`);
     if (!res.ok) throw new Error("Failed to load");
     return { activities, output: formatted, analysis };
   } catch {
@@ -58,8 +62,8 @@ export const SAMPLE_INPUTS: Record<string, Record<string, unknown>> = {
   "trial-balance-ingestion": {
     engagementName: DEMO_ENGAGEMENT.client,
     engagementType: DEMO_ENGAGEMENT.type,
-    periodRange: "36 months (Jan 2023 – Dec 2025 + Jan 2026)",
-    fileName: "CohnReznick_TB_Input_File_v2.xlsx",
+    periodRange: "24 months (Jan 2024 – Dec 2025)",
+    fileName: "TB_Horizon_FY25.csv",
   },
   "anomaly-detection": {
     engagementName: DEMO_ENGAGEMENT.client,
@@ -68,7 +72,7 @@ export const SAMPLE_INPUTS: Record<string, Record<string, unknown>> = {
   },
   "driver-analysis": {
     engagementName: DEMO_ENGAGEMENT.client,
-    selectedFindings: "All flagged anomalies (5)",
+    selectedFindings: "All flagged anomalies (3)",
   },
   "follow-up-questions": {
     engagementName: DEMO_ENGAGEMENT.client,

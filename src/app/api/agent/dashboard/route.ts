@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { SAMPLE_ADVISORY_OUTPUT } from "@/lib/sample-advisory-output";
 import { toDashboardInsights } from "@/lib/advisory-mappers";
+import { DEFAULT_ENGAGEMENT_NAME, ENGAGEMENT_PROFILES } from "@/lib/customer-management";
+import { getAnalysisForEngagement } from "@/lib/engagement-analysis";
 
-const data = SAMPLE_ADVISORY_OUTPUT;
+const data = getAnalysisForEngagement(DEFAULT_ENGAGEMENT_NAME);
 const insights = toDashboardInsights(data);
 
 export async function GET() {
@@ -11,7 +12,7 @@ export async function GET() {
       {
         id: "m1",
         label: "Active Diligences",
-        value: "1",
+        value: String(ENGAGEMENT_PROFILES.length),
         change: data.engagement.engagement_ref,
         changeType: "neutral",
         trend: "flat",

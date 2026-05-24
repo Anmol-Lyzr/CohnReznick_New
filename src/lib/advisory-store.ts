@@ -1,4 +1,6 @@
 import type { AdvisoryAnalysisOutput } from "@/lib/advisory-output-types";
+import { isRemovedEngagement } from "@/lib/customer-management";
+import { purgeRemovedEngagements } from "@/lib/removed-engagements";
 
 const STORAGE_KEY = "cohnreznick_engagement_analyses";
 const LEGACY_KEY = "cohnreznick_advisory_analysis";
@@ -9,12 +11,18 @@ export function loadEngagementStore(): EngagementAnalysisStore {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as EngagementAnalysisStore;
+    if (raw) {
+      return purgeRemovedEngagements(JSON.parse(raw) as EngagementAnalysisStore);
+    }
 
     const legacy = localStorage.getItem(LEGACY_KEY);
     if (legacy) {
       const single = JSON.parse(legacy) as AdvisoryAnalysisOutput;
-      const store = { [single.engagement.client_name]: single };
+      if (isRemovedEngagement(single.engagement.client_name)) {
+        localStorage.removeItem(LEGACY_KEY);
+        return {};
+      }
+      const store = purgeRemovedEngagements({ [single.engagement.client_name]: single });
       saveEngagementStore(store);
       localStorage.removeItem(LEGACY_KEY);
       return store;

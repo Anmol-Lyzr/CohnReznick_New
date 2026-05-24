@@ -93,8 +93,8 @@ export const DEMO_USERS = [
 ];
 
 export const DEMO_ENGAGEMENT = {
-  client: "TargetCo Acquisition",
-  type: "Transaction Diligence",
-  industry: "Middle Market",
-  workspace: "cohnreznick-poc",
+  client: "Horizon Logistics LLC",
+  type: "Financial Diligence",
+  industry: "Transportation",
+  workspace: "advisory",
 };

@@ -1,7 +1,10 @@
 import { readFileSync } from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
+import { DEMO_ENGAGEMENT } from "@/lib/cohnreznick-metadata";
 import { getMockOutput } from "@/lib/mock-outputs";
+
+const demoClient = DEMO_ENGAGEMENT.client;
 
 function loadPocDesignDoc(): string {
   const filePath = path.join(
@@ -39,25 +42,25 @@ Execute multi-step diligence workflows autonomously while preserving human judgm
 - Process data only within the dedicated Azure instance
 - Do not train models on client data`,
 
-  "workspace/cohnreznick-poc/engagement-brief.md": `# TargetCo Acquisition — Engagement Brief
+  "workspace/advisory/engagement-brief.md": `# ${demoClient} — Engagement Brief
 
-**Client:** TargetCo Acquisition (PoC)
-**Engagement Type:** Transaction Diligence
-**Period:** 36 months (Jan 2023 – Jan 2026)
+**Client:** ${demoClient} (PoC)
+**Engagement Type:** ${DEMO_ENGAGEMENT.type}
+**Period:** 24 months (Jan 2024 – Dec 2025)
 **Lead:** Paul Johnson
 
 ## Objectives
-1. Analyze 36-month trial-balance trends for material anomalies
+1. Analyze trial-balance trends for material anomalies
 2. Explain drivers with cross-account references
 3. Generate management follow-up questions
 4. Produce human-reviewed diligence report`,
 
-  "workspace/cohnreznick-poc/trial-balance-summary.md": getMockOutput("trial-balance-ingestion", { engagementName: "TargetCo Acquisition" }),
-  "workspace/cohnreznick-poc/anomaly-findings.md": getMockOutput("anomaly-detection", { engagementName: "TargetCo Acquisition" }),
-  "workspace/cohnreznick-poc/driver-analysis.md": getMockOutput("driver-analysis", { engagementName: "TargetCo Acquisition" }),
-  "workspace/cohnreznick-poc/follow-up-questions.md": getMockOutput("follow-up-questions", { engagementName: "TargetCo Acquisition" }),
-  "workspace/cohnreznick-poc/issue-log.md": getMockOutput("issue-tracker", { engagementName: "TargetCo Acquisition" }),
-  "workspace/cohnreznick-poc/diligence-report-draft.md": getMockOutput("report-drafting", { engagementName: "TargetCo Acquisition" }),
+  "workspace/advisory/trial-balance-summary.md": getMockOutput("trial-balance-ingestion", { engagementName: demoClient }),
+  "workspace/advisory/anomaly-findings.md": getMockOutput("anomaly-detection", { engagementName: demoClient }),
+  "workspace/advisory/driver-analysis.md": getMockOutput("driver-analysis", { engagementName: demoClient }),
+  "workspace/advisory/follow-up-questions.md": getMockOutput("follow-up-questions", { engagementName: demoClient }),
+  "workspace/advisory/issue-log.md": getMockOutput("issue-tracker", { engagementName: demoClient }),
+  "workspace/advisory/diligence-report-draft.md": getMockOutput("report-drafting", { engagementName: demoClient }),
 };
 
 const POC_DOC_PATHS = new Set([

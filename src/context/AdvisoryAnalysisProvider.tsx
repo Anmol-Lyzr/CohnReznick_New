@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { AdvisoryAnalysisOutput } from "@/lib/advisory-output-types";
 import {
   toDashboardInsights,
@@ -16,6 +17,7 @@ import {
   toReviewFindings,
 } from "@/lib/advisory-mappers";
 import {
+  finalizeAgentAnalysis,
   syncReportFromIssues,
   updateIssueInAnalysis,
   updateQuestionInAnalysis,
@@ -29,7 +31,7 @@ import {
   type EngagementAnalysisStore,
 } from "@/lib/advisory-store";
 import { fetchEngagementStore, saveEngagementToStore } from "@/lib/store-api";
-import { SAMPLE_ADVISORY_OUTPUT } from "@/lib/sample-advisory-output";
+import { purgeRemovedEngagements } from "@/lib/removed-engagements";
 import type { DashboardInsight, EngagementData, ReviewFinding } from "@/lib/types";
 
 interface AdvisoryContextValue {
@@ -40,7 +42,6 @@ interface AdvisoryContextValue {
   setAnalysis: (data: AdvisoryAnalysisOutput | null) => void;
   getEngagementAnalysis: (clientName: string) => AdvisoryAnalysisOutput | null;
   mergeFromRaw: (raw: unknown) => AdvisoryAnalysisOutput | null;
-  loadSample: () => void;
   reviewFindings: ReviewFinding[];
   dashboardInsights: DashboardInsight[];
   primaryEngagement: EngagementData | null;
@@ -62,6 +63,8 @@ interface AdvisoryContextValue {
 const AdvisoryContext = createContext<AdvisoryContextValue | null>(null);
 
 export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [engagementStore, setEngagementStore] = useState<EngagementAnalysisStore>({});
   const [sourceDocsByClient, setSourceDocsByClient] = useState<Record<string, string[]>>({});
   const [mongoConfigured, setMongoConfigured] = useState(false);
@@ -69,14 +72,20 @@ export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) 
   const [storeVersion, setStoreVersion] = useState(0);
 
   useEffect(() => {
-    const local = loadEngagementStore();
+    const client = searchParams.get("client")?.trim();
+    if (client) setActiveClient(client);
+  }, [pathname, searchParams]);
+
+  useEffect(() => {
+    const local = purgeRemovedEngagements(loadEngagementStore());
+    saveEngagementStore(local);
     setEngagementStore(local);
 
     fetchEngagementStore().then(({ configured, store, sourceDocsByClient: docs }) => {
       setMongoConfigured(configured);
       setSourceDocsByClient(docs);
       if (configured && Object.keys(store).length > 0) {
-        const merged = { ...local, ...store };
+        const merged = purgeRemovedEngagements({ ...local, ...store });
         setEngagementStore(merged);
         saveEngagementStore(merged);
         setStoreVersion((v) => v + 1);
@@ -85,7 +94,9 @@ export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) 
   }, []);
 
   const analysis = useMemo(() => {
-    if (activeClient && engagementStore[activeClient]) return engagementStore[activeClient];
+    if (activeClient) {
+      return engagementStore[activeClient] ?? null;
+    }
     const keys = Object.keys(engagementStore);
     return keys.length > 0 ? engagementStore[keys[0]] : null;
   }, [engagementStore, activeClient]);
@@ -112,7 +123,7 @@ export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) 
         return;
       }
       const store = loadEngagementStore();
-      const synced = syncReportFromIssues(data);
+      const synced = data._agent_v2_raw ? finalizeAgentAnalysis(data) : syncReportFromIssues(data);
       const client = synced.engagement.client_name;
       store[client] = synced;
       bumpStore(store, client, synced);
@@ -143,10 +154,6 @@ export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) 
     },
     [setAnalysis]
   );
-
-  const loadSample = useCallback(() => {
-    setAnalysis(SAMPLE_ADVISORY_OUTPUT);
-  }, [setAnalysis]);
 
   const updateEngagementIssue = useCallback(
     (clientName: string, issueId: string, patch: IssueUpdatePatch): AdvisoryAnalysisOutput | null => {
@@ -218,7 +225,6 @@ export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) 
       setAnalysis,
       getEngagementAnalysis,
       mergeFromRaw,
-      loadSample,
       reviewFindings,
       dashboardInsights,
       primaryEngagement,
@@ -236,7 +242,6 @@ export function AdvisoryAnalysisProvider({ children }: { children: ReactNode }) 
       setAnalysis,
       getEngagementAnalysis,
       mergeFromRaw,
-      loadSample,
       reviewFindings,
       dashboardInsights,
       primaryEngagement,

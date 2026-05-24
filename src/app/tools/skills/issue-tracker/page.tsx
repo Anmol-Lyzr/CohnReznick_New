@@ -10,6 +10,7 @@ import { useAdvisoryAnalysis } from "@/context/AdvisoryAnalysisProvider";
 import { formatSkillMarkdown } from "@/lib/advisory-mappers";
 import { getAnalysisForEngagement, isKnownEngagement } from "@/lib/engagement-analysis";
 import { syncReportFromIssues } from "@/lib/analysis-mutations";
+import { resolvePoCSampleEngagement } from "@/lib/client-sample-guard";
 import { SAMPLE_INPUTS, loadSampleOutput } from "@/lib/sample-data";
 
 export default function IssueTracker() {
@@ -33,7 +34,13 @@ export default function IssueTracker() {
   );
 
   const applySample = async () => {
-    const name = SAMPLE_INPUTS["issue-tracker"].engagementName as string;
+    const s = SAMPLE_INPUTS["issue-tracker"];
+    const params = new URLSearchParams(window.location.search);
+    const name = resolvePoCSampleEngagement(
+      params.get("client"),
+      (s.engagementName as string) || engagementName
+    );
+    if (!name) return;
     setEngagementName(name);
     const { activities, output, analysis } = await loadSampleOutput("issue-tracker", name);
     const synced = syncReportFromIssues(analysis);
@@ -61,7 +68,8 @@ export default function IssueTracker() {
   }, [engagementName, getEngagementAnalysis, displayAnalysis]);
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("sample") === "true") applySample();
+    if (new URLSearchParams(window.location.search).get("sample") !== "true") return;
+    void applySample();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

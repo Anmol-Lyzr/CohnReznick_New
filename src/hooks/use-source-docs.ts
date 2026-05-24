@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DEFAULT_SOURCE_DOCS } from "@/lib/source-documents";
-import { ENGAGEMENT_NAMES } from "@/lib/customer-management";
+import { getSourceDocsForEngagement } from "@/lib/customer-management";
+import { filterEngagementSourceDocs } from "@/lib/source-documents";
 import type { SourceDocumentMeta } from "@/lib/mongodb/types";
 
 export interface SourceDocRef {
@@ -20,13 +20,10 @@ export function useSourceDocs(clientName: string, sourceDocsByClient?: Record<st
       return;
     }
 
-    const preset = sourceDocsByClient?.[clientName];
-    if (ENGAGEMENT_NAMES.includes(clientName) && !preset?.length) {
-      setDocuments(DEFAULT_SOURCE_DOCS.map((filename) => ({ filename })));
-      return;
-    }
+    const profileDocs = filterEngagementSourceDocs(getSourceDocsForEngagement(clientName));
+    const preset = filterEngagementSourceDocs(sourceDocsByClient?.[clientName] ?? profileDocs);
 
-    if (preset?.length) {
+    if (preset.length > 0) {
       setDocuments(preset.map((filename) => ({ filename })));
     }
 
@@ -47,8 +44,6 @@ export function useSourceDocs(clientName: string, sourceDocsByClient?: Record<st
         }
         if (merged.length > 0) {
           setDocuments(merged);
-        } else if (ENGAGEMENT_NAMES.includes(clientName)) {
-          setDocuments(DEFAULT_SOURCE_DOCS.map((filename) => ({ filename })));
         } else {
           setDocuments([]);
         }

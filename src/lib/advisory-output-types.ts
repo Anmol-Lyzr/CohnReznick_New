@@ -1,5 +1,12 @@
 /** Matches Lyzr agent `advisory_analysis_output` JSON schema */
 
+import type {
+  AgentV2AuditTrail,
+  AgentV2CtaAction,
+  AgentV2Status,
+  CohnReznickAdvisoryAiAnalystOutput,
+} from "@/lib/advisory-agent-v2-types";
+
 export type ParseWarningType =
   | "missing_period"
   | "duplicate_account"
@@ -100,6 +107,8 @@ export interface IssueLogEntry {
   issue_id: string;
   anomaly_id: string;
   display_order: number;
+  /** From agent z_score_estimate (anomaly table) */
+  z_score_estimate?: number;
   account_code: string;
   account_name: string;
   account_type: AccountType;
@@ -186,6 +195,17 @@ export interface SummaryStats {
   parse_warnings: number;
 }
 
+export interface AgentResponseMeta {
+  agent_name: string;
+  agent_role: string;
+  status: AgentV2Status;
+  file_name?: string;
+  cta_actions: AgentV2CtaAction[];
+  recommended_next_steps: string[];
+  audit_trail?: AgentV2AuditTrail;
+  trial_balance?: import("@/lib/advisory-agent-v2-types").AgentV2TrialBalance;
+}
+
 export interface AdvisoryAnalysisOutput {
   engagement: EngagementMeta;
   parse_warnings: ParseWarning[];
@@ -193,4 +213,8 @@ export interface AdvisoryAnalysisOutput {
   issue_log: IssueLogEntry[];
   report: AdvisoryReport;
   summary_stats: SummaryStats;
+  /** Raw Lyzr v2 payload when mapped from cohnreznick_advisory_ai_analyst */
+  _agent_v2_raw?: CohnReznickAdvisoryAiAnalystOutput;
+  /** UI helpers derived from v2 response */
+  _agent_meta?: AgentResponseMeta;
 }

@@ -35,6 +35,8 @@ import {
 import Logo from "../logo/Logo"
 import Link from "next/link"
 import { DEMO_USERS } from "@/lib/cohnreznick-metadata"
+import { useAgentShell } from "@/context/AgentShellProvider"
+import { Inbox, Command } from "lucide-react"
 
 const data = {
     user: {
@@ -44,10 +46,10 @@ const data = {
     },
     navTop: [
         { title: "Dashboard", url: "/", icon: IconDashboard },
+        { title: "TB Ingestion", url: "/tools/skills/trial-balance-ingestion", icon: IconUpload },
     ],
     navJourneys: [
         { title: "Customer Management",   url: "/tools/skills/customer-management",       icon: IconUsers },
-        { title: "TB Ingestion",          url: "/tools/skills/trial-balance-ingestion", icon: IconUpload },
         { title: "Anomaly Detection",     url: "/tools/skills/anomaly-detection",         icon: IconChartLine },
         { title: "Driver Analysis",       url: "/tools/skills/driver-analysis",           icon: IconGitCompare },
         { title: "Follow-Up Questions",   url: "/tools/skills/follow-up-questions",       icon: IconMessageQuestion },
@@ -70,6 +72,34 @@ const data = {
     navSecondary: [
         { title: "Settings", url: "/settings", icon: IconSettings },
     ],
+}
+
+function AgentShellSidebarFooter() {
+    const { inboxCount, setInboxOpen, setCommandOpen } = useAgentShell()
+    return (
+        <div className="px-2 pb-2 flex flex-col gap-1">
+            <button
+                type="button"
+                onClick={() => setCommandOpen(true)}
+                className="flex items-center justify-between w-full text-[10px] text-muted-foreground hover:text-primary rounded-md px-2 py-1.5 hover:bg-sidebar-accent"
+            >
+                <span className="inline-flex items-center gap-1">
+                    <Command className="w-3 h-3" /> Command palette
+                </span>
+                <kbd className="text-[9px] opacity-60">⌘K</kbd>
+            </button>
+            {inboxCount > 0 && (
+                <button
+                    type="button"
+                    onClick={() => setInboxOpen(true)}
+                    className="flex items-center gap-1 w-full text-[10px] font-semibold text-warning rounded-md px-2 py-1.5 bg-warning/10 hover:bg-warning/15"
+                >
+                    <Inbox className="w-3 h-3" />
+                    {inboxCount} pending review
+                </button>
+            )}
+        </div>
+    )
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -98,6 +128,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <NavSecondary items={data.navSecondary} className="mt-auto" />
             </SidebarContent>
             <SidebarFooter>
+                <AgentShellSidebarFooter />
                 <NavUser user={data.user} />
             </SidebarFooter>
         </Sidebar>

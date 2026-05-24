@@ -3,6 +3,8 @@ import { useRef } from "react";
 import { Provider } from "react-redux";
 import { makeStore, AppStore } from "../lib/store";
 import { AdvisoryAnalysisProvider } from "@/context/AdvisoryAnalysisProvider";
+import { AgentShellProvider } from "@/context/AgentShellProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function StoreProvider({
   children,
@@ -17,7 +19,12 @@ export default function StoreProvider({
 
   return (
     <Provider store={storeRef.current}>
-      <AdvisoryAnalysisProvider>{children}</AdvisoryAnalysisProvider>
+      <AdvisoryAnalysisProvider>
+        <AgentShellProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </AgentShellProvider>
+      </AdvisoryAnalysisProvider>
     </Provider>
   );
 }

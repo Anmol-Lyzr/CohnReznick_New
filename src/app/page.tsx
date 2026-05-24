@@ -8,141 +8,42 @@ import { EngagementCard } from "@/components/dashboard/EngagementCard";
 import { InsightRow } from "@/components/dashboard/InsightRow";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import Logo from "@/components/logo/Logo";
-import type { DashboardInsight, EngagementData, SuggestedAction } from "@/lib/types";
-import { APP_METADATA, DEMO_ENGAGEMENT } from "@/lib/cohnreznick-metadata";
+import type { EngagementData, SuggestedAction } from "@/lib/types";
+import { APP_METADATA } from "@/lib/cohnreznick-metadata";
 import { useAdvisoryAnalysis } from "@/context/AdvisoryAnalysisProvider";
+import { useAgentShell } from "@/context/AgentShellProvider";
+import {
+  buildDashboardEngagements,
+  buildDashboardInsights,
+  buildDashboardSuggestedActions,
+} from "@/lib/dashboard-agent-suggestions";
+import { snapshotFromAnalysis, skillHref } from "@/lib/agent-engagement-state";
 
 const containerVariants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.08 } },
 } as const;
 
-const INSIGHTS: DashboardInsight[] = [
-  {
-    id: "i1",
-    severity: "critical",
-    headline: "Revenue decline −18.4% MoM",
-    summary: "Product sales (4100) fell sharply in Jan 2026 — correlates with AR movement and customer concentration risk.",
-    category: "revenue",
-    actionLabel: "Review Anomaly",
-    href: "/tools/skills/anomaly-detection",
-  },
-  {
-    id: "i2",
-    severity: "warning",
-    headline: "Payroll spike — three-payroll month",
-    summary: "Mar 2025 payroll +42% vs trailing average. Likely 53-week calendar effect — verify normalization in workpapers.",
-    category: "payroll",
-    actionLabel: "Driver Analysis",
-    href: "/tools/skills/driver-analysis",
-  },
-  {
-    id: "i3",
-    severity: "warning",
-    headline: "AR days outstanding at 68 days",
-    summary: "DSO expansion in Dec 2025 driven by Customer B payment term extension. Maps to revenue softness.",
-    category: "working-capital",
-    actionLabel: "View Issues",
-    href: "/tools/skills/issue-tracker",
-  },
-  {
-    id: "i4",
-    severity: "info",
-    headline: "4 anomalies pending review",
-    summary: "Approve or reject flagged movements in Anomaly Detection before report drafting.",
-    category: "review",
-    actionLabel: "Anomaly Detection",
-    href: "/tools/skills/anomaly-detection",
-  },
-];
-
-const ENGAGEMENTS: EngagementData[] = [
-  {
-    id: "e1",
-    client: DEMO_ENGAGEMENT.client,
-    type: DEMO_ENGAGEMENT.type,
-    progress: {
-      ingestion: true,
-      anomaly: true,
-      driver: true,
-      questions: true,
-      issues: true,
-      review: false,
-      report: false,
-    },
-    lastActivity: "2 hours ago",
-    industry: DEMO_ENGAGEMENT.industry,
-  },
-  {
-    id: "e2",
-    client: "Horizon Logistics LLC",
-    type: "Financial Diligence",
-    progress: {
-      ingestion: true,
-      anomaly: true,
-      driver: false,
-      questions: false,
-      issues: false,
-      review: false,
-      report: false,
-    },
-    lastActivity: "Yesterday",
-    industry: "Transportation",
-  },
-];
-
-const SUGGESTED_ACTIONS: SuggestedAction[] = [
-  {
-    client: DEMO_ENGAGEMENT.client,
-    label: "Review 4 pending anomalies",
-    detail: "Approve or reject in Anomaly Detection before report drafting",
-    href: "/tools/skills/anomaly-detection",
-  },
-  {
-    client: DEMO_ENGAGEMENT.client,
-    label: "Upload 36-month trial balance",
-    detail: "Ingest and normalize TB data for new analysis run",
-    href: "/tools/skills/trial-balance-ingestion",
-  },
-  {
-    client: DEMO_ENGAGEMENT.client,
-    label: "Generate diligence report draft",
-    detail: "Compile approved findings into firm template",
-    href: "/tools/skills/report-drafting",
-  },
-  {
-    client: "Horizon Logistics LLC",
-    label: "Run anomaly detection",
-    detail: "TB ingested — ready for trend analysis",
-    href: "/tools/skills/anomaly-detection",
-  },
-];
-
 export default function Dashboard() {
   const router = useRouter();
-  const { dashboardInsights, primaryEngagement, analysis } = useAdvisoryAnalysis();
+  const { primaryEngagement, analysis, engagementStore } = useAdvisoryAnalysis();
+  const { openChat } = useAgentShell();
   const [showAllInsights, setShowAllInsights] = useState(false);
   const [query, setQuery] = useState("");
 
-  const insights = dashboardInsights.length > 0 ? dashboardInsights : INSIGHTS;
-  const engagements: EngagementData[] = useMemo(() => {
-    const list = primaryEngagement ? [primaryEngagement] : [];
-    return list.length > 0 ? [...list, ...ENGAGEMENTS.slice(1)] : ENGAGEMENTS;
-  }, [primaryEngagement]);
+  const insights = useMemo(
+    () => buildDashboardInsights(analysis, engagementStore),
+    [analysis, engagementStore]
+  );
+  const engagements: EngagementData[] = useMemo(
+    () => buildDashboardEngagements(engagementStore, primaryEngagement),
+    [engagementStore, primaryEngagement]
+  );
 
-  const suggestedActions: SuggestedAction[] = useMemo(() => {
-    if (!analysis) return SUGGESTED_ACTIONS;
-    const pending = analysis.issue_log.filter((i) => i.review_status === "PENDING_REVIEW").length;
-    return [
-      {
-        client: analysis.engagement.client_name,
-        label: `Review ${pending} pending anomal${pending === 1 ? "y" : "ies"}`,
-        detail: analysis.report.executive_summary.slice(0, 80) + "…",
-        href: "/tools/skills/anomaly-detection",
-      },
-      ...SUGGESTED_ACTIONS.slice(1),
-    ];
-  }, [analysis]);
+  const suggestedActions: SuggestedAction[] = useMemo(
+    () => buildDashboardSuggestedActions(engagementStore, analysis),
+    [engagementStore, analysis]
+  );
 
   const displayed = showAllInsights ? insights : insights.slice(0, 3);
 
@@ -163,9 +64,8 @@ export default function Dashboard() {
           query={query}
           onChange={setQuery}
           onSubmit={() => {
-            if (query.trim()) {
-              router.push(`/tools/skills/anomaly-detection?client=${encodeURIComponent(DEMO_ENGAGEMENT.client)}`);
-            }
+            if (!query.trim()) return;
+            openChat(query);
           }}
           suggestedActions={suggestedActions}
         />
@@ -208,11 +108,15 @@ export default function Dashboard() {
           <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-1.5">
             {engagements.map((e) => (
               <EngagementCard
-                key={e.id}
+                key={e.client}
                 engagement={e}
-                onClick={() =>
-                  router.push(`/tools/skills/anomaly-detection?client=${encodeURIComponent(e.client)}`)
-                }
+                onClick={() => {
+                  const snap = snapshotFromAnalysis(engagementStore[e.client] ?? null, e.client);
+                  const href = snap.nextSkillId
+                    ? skillHref(snap.nextSkillId, e.client)
+                    : `/tools/skills/anomaly-detection?client=${encodeURIComponent(e.client)}`;
+                  router.push(href);
+                }}
               />
             ))}
           </motion.div>

@@ -3,6 +3,7 @@ import { agentChat } from "@/lib/lyzr-api/agentChat";
 import { isLiveAgentConfigured } from "@/lib/agent-mode";
 import { parseAgentResult } from "@/lib/parse-advisory-output";
 import { buildChatAgentMessage } from "@/lib/agent-prompts";
+import { DEMO_ENGAGEMENT } from "@/lib/cohnreznick-metadata";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -14,29 +15,30 @@ function chunk(text: string): string[] {
 
 function generateMockResponse(query: string): string {
   const lower = query.toLowerCase();
+  const client = DEMO_ENGAGEMENT.client;
 
-  if (lower.includes("status") || lower.includes("targetco") || lower.includes("engagement")) {
-    return `## TargetCo Acquisition — Diligence Status
+  if (lower.includes("status") || lower.includes("horizon") || lower.includes("engagement")) {
+    return `## ${client} — Diligence Status
 
 | Workflow Step | Status |
 |---------------|--------|
 | TB Ingestion | Complete |
 | Anomaly Detection | Complete |
-| Driver Analysis | Complete |
-| Follow-Up Questions | Complete |
-| Issue Tracker | Complete |
-| **Human Review** | **4 pending** |
+| Driver Analysis | In progress |
+| Follow-Up Questions | Not started |
+| Issue Tracker | Pending |
+| **Human Review** | **3 pending** |
 | Report Draft | Not started |
 
-**Next action:** Open **Anomaly Detection** to approve findings before report drafting.`;
+**Next action:** Open **Anomaly Detection** to approve freight and fuel findings.`;
   }
 
-  if (lower.includes("anomal") || lower.includes("revenue") || lower.includes("trend")) {
-    return `## Material Anomalies — TargetCo
+  if (lower.includes("anomal") || lower.includes("freight") || lower.includes("fuel") || lower.includes("trend")) {
+    return `## Material Anomalies — ${client}
 
-1. **Revenue (4100)** — −18.4% MoM Jan 2026 (Critical)
-2. **Payroll (6100)** — +42% Mar 2025, three-payroll month (High)
-3. **AR (1200)** — DSO 68 days Dec 2025 (High)
+1. **Freight Revenue (4100)** — −11.2% QoQ Q4 2025 (High)
+2. **Fuel & DEF (5100)** — +18% YoY, surcharge lag (High)
+3. **Fleet Assets (1500)** — Capex spike Sep 2025 (Medium)
 
 Run **Driver Analysis** for cross-account explanations, or open **Anomaly Detection** to approve findings.`;
   }
@@ -44,7 +46,7 @@ Run **Driver Analysis** for cross-account explanations, or open **Anomaly Detect
   if (lower.includes("review") || lower.includes("approve")) {
     return `## Human-in-the-Loop Review
 
-4 findings are pending approval. Approve, edit, or reject each anomaly in **Anomaly Detection** before report drafting.
+3 findings are pending approval. Approve, edit, or reject each anomaly in **Anomaly Detection** before report drafting.
 
 This is a mandatory gate per the CohnReznick PoC workflow (Steps 7 & 9).`;
   }
@@ -52,23 +54,23 @@ This is a mandatory gate per the CohnReznick PoC workflow (Steps 7 & 9).`;
   if (lower.includes("upload") || lower.includes("trial balance") || lower.includes("tb")) {
     return `## Trial Balance Upload
 
-Upload 36 months of trial-balance data (Excel/CSV) via **TB Ingestion** (/tools/skills/trial-balance-ingestion).
+Upload trial-balance data (Excel/CSV) via **TB Ingestion** (/tools/skills/trial-balance-ingestion).
 
-PoC sample file: \`CohnReznick_TB_Input_File_v2.xlsx\` — use the **PoC Sample** toggle to load demo data.`;
+PoC sample file: \`TB_Horizon_FY25.csv\` — use the **PoC Sample** toggle to load demo data.`;
   }
 
   return `## CohnReznick Advisory Agent
 
 I can help with transaction diligence workflows:
 
-- **Upload & parse** 36-month trial balance data
-- **Detect anomalies** in revenue, payroll, AR, costs, and margins
+- **Upload & parse** trial balance data
+- **Detect anomalies** in revenue, costs, working capital, and margins
 - **Explain drivers** with cross-account analysis
 - **Generate follow-up questions** for management
 - **Track issues** with severity and source traceability
 - **Review findings** before client delivery
 
-Try: "What is the TargetCo engagement status?" or "Show revenue anomalies"`;
+Try: "What is the ${client} engagement status?" or "Show freight revenue anomalies"`;
 }
 
 export async function POST(req: NextRequest) {

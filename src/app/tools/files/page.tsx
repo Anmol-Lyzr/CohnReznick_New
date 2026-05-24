@@ -38,7 +38,7 @@ const FILE_TREE: FileNode[] = [
     ],
   },
   {
-    name: "workspace/cohnreznick-poc/",
+    name: "workspace/advisory/",
     type: "folder",
     children: [
       { name: "engagement-brief.md", type: "file", size: "2.8 KB" },
@@ -63,7 +63,7 @@ const FOLDER_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   "identity/": Database,
   "skills/": GitBranch,
   "knowledge/docs/": Database,
-  "workspace/cohnreznick-poc/": FolderOpen,
+  "workspace/advisory/": FolderOpen,
   "templates/": FileText,
 };
 
@@ -109,7 +109,7 @@ export default function FileSystem() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">File System</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Agent workspace — skills, diligence knowledge, TargetCo PoC files, and report templates
+          Agent workspace — skills, diligence knowledge, engagement source files, and report templates
         </p>
       </div>
       <div className="glass-card rounded-xl p-4">

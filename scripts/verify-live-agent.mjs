@@ -1,8 +1,8 @@
 /**
- * Verifies Lyzr agent response parses into advisory_analysis_output.
- * Usage: node scripts/verify-live-agent.mjs
+ * Verifies new-client Lyzr agent returns cohnreznick_advisory_ai_analyst JSON.
+ * Usage: node scripts/verify-live-agent.mjs [path-to-tb-file]
  */
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -24,21 +24,22 @@ function loadEnvLocal() {
 loadEnvLocal();
 
 const apiKey = process.env.LYZR_API_KEY;
-const agentId = process.env.LYZR_AGENT_ID;
+const agentId = process.env.LYZR_NEW_CLIENT_AGENT_ID;
 
 if (!apiKey || !agentId) {
-  console.error("Missing LYZR_API_KEY or LYZR_AGENT_ID in .env.local");
+  console.error("Missing LYZR_API_KEY or LYZR_NEW_CLIENT_AGENT_ID in .env.local");
   process.exit(1);
 }
 
-const REQUIRED = [
-  "engagement",
-  "parse_warnings",
-  "suppressed_anomalies",
-  "issue_log",
-  "report",
-  "summary_stats",
-];
+function isV2(obj) {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    typeof obj.agent_name === "string" &&
+    obj.analysis_summary &&
+    Array.isArray(obj.findings)
+  );
+}
 
 function extract(raw) {
   if (!raw) return null;
@@ -59,8 +60,15 @@ function extract(raw) {
     }
   }
   if (typeof raw === "object") {
-    if (REQUIRED.every((k) => k in raw)) return raw;
-    for (const k of ["response", "message", "output", "data"]) {
+    if (isV2(raw)) return raw;
+    for (const k of [
+      "cohnreznick_advisory_ai_analyst",
+      "response",
+      "message",
+      "output",
+      "data",
+      "structured_output",
+    ]) {
       if (raw[k]) {
         const n = extract(raw[k]);
         if (n) return n;
@@ -70,27 +78,57 @@ function extract(raw) {
   return null;
 }
 
+async function uploadAsset(filePath) {
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const exec = promisify(execFile);
+  const url = "https://agent-prod.studio.lyzr.ai/v3/assets/upload";
+  const { stdout } = await exec("curl", [
+    "-sS",
+    "-X",
+    "POST",
+    "-H",
+    `x-api-key: ${apiKey}`,
+    "-H",
+    "accept: application/json",
+    "-F",
+    `file=@${filePath}`,
+    url,
+  ]);
+  const data = JSON.parse(stdout);
+  return data.asset_id || data.assetId || data.id;
+}
+
+const tbArg = process.argv[2];
+const defaultTb = resolve(root, "public/documents/trial-balance/TB_Horizon_FY25.csv");
+const tbPath = tbArg ? resolve(process.cwd(), tbArg) : defaultTb;
+
+let assets = [];
+if (existsSync(tbPath)) {
+  console.log("Uploading asset:", tbPath);
+  try {
+    const assetId = await uploadAsset(tbPath);
+    if (assetId) {
+      assets = [assetId];
+      console.log("  asset_id:", assetId);
+    }
+  } catch (err) {
+    console.warn("  asset upload skipped:", err.message);
+  }
+} else {
+  console.warn("No TB file at", tbPath, "— calling without assets");
+}
+
 const message = [
-  "Run the anomaly detection workflow for engagement \"TargetCo Acquisition\".",
-  "Use the PoC trial balance context below (no file attached).",
+  'Run the trial balance ingestion workflow for engagement "Verify Test Client".',
+  "Uploaded trial balance file attached.",
   "",
-  `Engagement: TargetCo Acquisition (TAS-2025-0042), buy-side transaction diligence.
-Trial balance: 847 GL accounts, USD, periods Jan-23 through Jan-26 (36 months).
-Material movements to analyze:
-- Revenue 4100: −18.4% MoM Jan-26 ($3.8M → $3.1M)
-- Payroll 6100: +42% Mar-25 (three-payroll month, 53-week calendar)
-- AR 1200: DSO 68 days Dec-25 (+28% balance build)
-- Gross margin: −3.2 pts FY-25 (COGS +12% vs revenue +6%)
-- SG&A 6300: +156% Nov-25 one-time legal/M&A fees
-Workpapers: WP-03 payroll calendar, WP-04 legal one-time, WP-07 customer concentration, WP-12 Customer B payment terms.`,
-  "",
-  "Return ONLY a single valid JSON object matching the advisory_analysis_output schema:",
-  "engagement, parse_warnings, suppressed_anomalies, issue_log, report, summary_stats.",
-  "Populate issue_log with all material findings (typically 4–6 issues), sorted by display_order.",
-  "Set review_status to PENDING_REVIEW for each issue. No markdown, no code fences.",
+  "Return ONLY valid JSON matching cohnreznick_advisory_ai_analyst schema:",
+  "agent_name, agent_role, status, analysis_summary, findings, issue_tracker, report_summary, cta_actions, audit_trail.",
+  "No markdown, no code fences.",
 ].join("\n");
 
-console.log("Calling Lyzr agent…");
+console.log("Calling new-client Lyzr agent…", agentId);
 const res = await fetch("https://agent-prod.studio.lyzr.ai/v3/inference/chat/", {
   method: "POST",
   headers: {
@@ -98,10 +136,11 @@ const res = await fetch("https://agent-prod.studio.lyzr.ai/v3/inference/chat/", 
     "x-api-key": apiKey,
   },
   body: JSON.stringify({
-    user_id: "anmol@lyzr.ai",
+    user_id: process.env.LYZR_USER_ID || "anmol@lyzr.ai",
     agent_id: agentId,
     session_id: `${agentId}-verify-${Date.now()}`,
     message,
+    ...(assets.length ? { assets } : {}),
   }),
 });
 
@@ -111,27 +150,30 @@ if (!res.ok) {
 }
 
 const body = await res.json();
-const analysis = extract(body);
+const v2 = extract(body);
 
-if (!analysis) {
-  console.error("FAIL: Could not parse advisory_analysis_output");
+if (!v2) {
+  console.error("FAIL: Could not parse cohnreznick_advisory_ai_analyst JSON");
   console.error("Raw keys:", Object.keys(body));
   console.error("Response preview:", String(body.response || "").slice(0, 500));
   process.exit(1);
 }
 
-const issues = analysis.issue_log?.length ?? 0;
-const stats = analysis.summary_stats;
+const findings = v2.findings?.length ?? 0;
+const summary = v2.analysis_summary;
 
-console.log("PASS: Parsed advisory_analysis_output");
-console.log("  engagement_ref:", analysis.engagement?.engagement_ref);
-console.log("  client:", analysis.engagement?.client_name);
-console.log("  issue_log:", issues);
-console.log("  total_issues (stats):", stats?.total_issues);
-console.log("  executive_summary:", (analysis.report?.executive_summary || "").slice(0, 120) + "…");
+console.log("PASS: Parsed cohnreznick_advisory_ai_analyst");
+console.log("  agent:", v2.agent_name, "· status:", v2.status);
+console.log("  findings:", findings);
+console.log("  months_analyzed:", summary?.months_analyzed);
+console.log("  accounts_analyzed:", summary?.accounts_analyzed);
+console.log(
+  "  executive_summary:",
+  (v2.report_summary?.executive_summary || "").slice(0, 120) + "…"
+);
 
-if (issues === 0) {
-  console.warn("WARN: issue_log is empty — UI pages will show no findings");
+if (findings === 0) {
+  console.warn("WARN: findings array is empty");
   process.exit(2);
 }
 

@@ -11,6 +11,8 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import type { JourneyState } from "@/hooks/use-journey-stream";
 import { SkillOutputView } from "@/components/skill-output-view";
+import { useAgentSkillRegistration } from "@/context/AgentShellProvider";
+import type { SkillId } from "@/lib/customer-management";
 const ICON_MAP: Record<string, React.ElementType> = {
   search: Search,
   book: BookOpen,
@@ -130,6 +132,14 @@ export function JourneyLayout({
   onAnomalyReviewChange,
   onSkillReviewChange,
 }: JourneyLayoutProps) {
+  const skillIdTyped = skillId as SkillId;
+  useAgentSkillRegistration({
+    skillId: skillIdTyped,
+    onExecute,
+    executeLabel,
+    isRunning: state.isRunning,
+  });
+
   const activityEndRef = useRef<HTMLDivElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const [pipelineCollapsed, setPipelineCollapsed] = useState(false);
@@ -341,12 +351,16 @@ export function JourneyLayout({
                   <span
                     className={cn(
                       "inline-block mb-3 text-[10px] font-semibold px-2 py-0.5 rounded-full",
-                      state.agentMode === "live"
+                      state.analysis?._agent_meta || state.analysis?._agent_v2_raw || state.agentMode === "live"
                         ? "bg-success/10 text-success"
                         : "bg-muted text-muted-foreground"
                     )}
                   >
-                    {state.agentMode === "live" ? "Live Lyzr Agent" : "Demo / fallback"}
+                    {state.analysis?._agent_meta || state.analysis?._agent_v2_raw
+                      ? "Live Lyzr Agent"
+                      : state.agentMode === "live"
+                        ? "Live Lyzr Agent"
+                        : "PoC sample"}
                   </span>
                 )}
                 {state.analysis ? (

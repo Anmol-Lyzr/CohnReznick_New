@@ -21,6 +21,8 @@ import {
   type DeliverStatus,
   type SkillId,
 } from "@/lib/customer-management";
+import { CustomerRowActions } from "@/components/agent-shell/CustomerRowActions";
+import { SourceDocChip } from "@/components/source-doc-chip";
 
 const PIPELINE_STATUS_STYLES: Record<PipelineStatus, string> = {
   complete: "bg-success/10 text-success border-success/20",
@@ -38,7 +40,6 @@ const DELIVER_STATUS_STYLES: Record<DeliverStatus, string> = {
 };
 
 const TABLE_SKILL_COLUMNS: { key: SkillId; label: string }[] = [
-  { key: "trial-balance-ingestion", label: "TB Ingestion" },
   { key: "anomaly-detection", label: "Anomaly Detection" },
   { key: "driver-analysis", label: "Driver Analysis" },
   { key: "follow-up-questions", label: "Question" },
@@ -64,8 +65,8 @@ function StatusBadge({ status, type }: { status: PipelineStatus | DeliverStatus;
 }
 
 export default function CustomerManagementPage() {
-  const { engagementStore, storeVersion } = useAdvisoryAnalysis();
-  const rows = buildLiveEngagementRows(engagementStore);
+  const { engagementStore, storeVersion, sourceDocsByClient } = useAdvisoryAnalysis();
+  const rows = buildLiveEngagementRows(engagementStore, sourceDocsByClient);
 
   const inReviewCount = rows.filter((r) => r.deliverStatus === "in_review").length;
   const readyCount = rows.filter((r) => r.deliverStatus === "ready" || r.deliverStatus === "delivered").length;
@@ -105,6 +106,9 @@ export default function CustomerManagementPage() {
             <TableHeader>
               <TableRow className="hover:bg-transparent border-border/50">
                 <TableHead className="text-[11px] font-semibold whitespace-nowrap">Client Name</TableHead>
+                <TableHead className="text-[11px] font-semibold whitespace-nowrap min-w-[140px]">
+                  Source Documents
+                </TableHead>
                 {TABLE_SKILL_COLUMNS.map((col) => (
                   <TableHead key={col.key} className="text-[11px] font-semibold whitespace-nowrap">
                     {col.label}
@@ -116,13 +120,25 @@ export default function CustomerManagementPage() {
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.profile.id} className="border-border/40">
-                  <TableCell className="font-semibold text-sm text-foreground whitespace-nowrap py-3">
+                  <TableCell className="font-semibold text-sm text-foreground whitespace-nowrap py-3 align-top">
                     <Link
                       href={`/tools/skills/anomaly-detection?client=${encodeURIComponent(row.profile.clientName)}`}
                       className="hover:text-primary transition-colors"
                     >
                       {row.profile.clientName}
                     </Link>
+                    <CustomerRowActions row={row} />
+                  </TableCell>
+                  <TableCell className="py-3 align-top">
+                    <div className="flex flex-wrap gap-1 max-w-[220px]">
+                      {row.profile.sourceDocs.map((doc) => (
+                        <SourceDocChip
+                          key={doc}
+                          doc={doc}
+                          clientName={row.profile.clientName}
+                        />
+                      ))}
+                    </div>
                   </TableCell>
                   {TABLE_SKILL_COLUMNS.map((col) => {
                     const status = getSkillStatus(row, col.key);

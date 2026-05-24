@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/ui/app-sidebar"
 import { SidebarCollapsedTrigger } from "@/components/ui/sidebar-collapsed-trigger"
+import { AgentShell } from "@/components/agent-shell/AgentShell"
 import {
     SidebarInset,
     SidebarProvider,
@@ -15,9 +16,11 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
             }
         >
             <AppSidebar variant="sidebar" />
-            <SidebarInset className="min-h-svh">
+            <SidebarInset className="min-h-svh flex flex-col">
                 <SidebarCollapsedTrigger />
-                {children}
+                <AgentShell>
+                    <div className="flex-1 min-h-0 flex flex-col">{children}</div>
+                </AgentShell>
             </SidebarInset>
         </SidebarProvider>
     )

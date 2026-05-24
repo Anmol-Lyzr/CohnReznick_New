@@ -9,14 +9,40 @@ function generateUniqueId(): string {
   return `${timestamp}-${randomStr}`;
 }
 
+export function buildAgentSessionId(agentId: string, clientName: string): string {
+  const slug = clientName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40);
+  return `${agentId}-${slug || "session"}`;
+}
+
+export interface AgentChatOptions {
+  sessionId?: string;
+  assets?: string[];
+  userId?: string;
+}
+
 export async function agentChat(
   message: string,
   lyzrApiKey: string,
   agentId: string,
-  sessionId?: string
+  options?: AgentChatOptions
 ) {
-  const userId = generateUniqueId();
-  const chatSessionId = sessionId || generateUniqueId();
+  const userId = options?.userId?.trim() || generateUniqueId();
+  const chatSessionId = options?.sessionId || generateUniqueId();
+
+  const payload: Record<string, unknown> = {
+    user_id: userId,
+    agent_id: agentId,
+    session_id: chatSessionId,
+    message,
+  };
+
+  if (options?.assets?.length) {
+    payload.assets = options.assets;
+  }
 
   const data = await postJson<Record<string, unknown> & {
     response?: string;
@@ -26,12 +52,7 @@ export async function agentChat(
   }>(
     INFERENCE_URL,
     { "x-api-key": lyzrApiKey },
-    {
-      user_id: userId,
-      agent_id: agentId,
-      session_id: chatSessionId,
-      message,
-    },
+    payload,
     180_000
   );
 

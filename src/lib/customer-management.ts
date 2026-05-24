@@ -1,5 +1,3 @@
-import { DEFAULT_SOURCE_DOCS } from "@/lib/source-documents";
-
 export type PipelineStatus = "complete" | "in_progress" | "pending" | "not_started";
 export type DeliverStatus = "delivered" | "ready" | "in_review" | "draft" | "blocked";
 
@@ -62,7 +60,14 @@ export const DELIVER_STATUS_LABELS: Record<DeliverStatus, string> = {
 };
 
 export const ENGAGEMENT_STORAGE_KEY = "cohnreznick-selected-engagement";
-export const DEFAULT_ENGAGEMENT_NAME = "TargetCo Acquisition";
+export const DEFAULT_ENGAGEMENT_NAME = "Horizon Logistics LLC";
+
+/** Retired clients — purged from store and redirects */
+export const REMOVED_ENGAGEMENT_NAMES = ["TargetCo Acquisition"] as const;
+
+export function isRemovedEngagement(clientName: string): boolean {
+  return (REMOVED_ENGAGEMENT_NAMES as readonly string[]).includes(clientName);
+}
 
 function skill(
   status: PipelineStatus,
@@ -76,50 +81,10 @@ function skill(
 export const ENGAGEMENT_PROFILES: EngagementProfile[] = [
   {
     id: "c1",
-    clientName: "TargetCo Acquisition",
-    engagementType: "Transaction Diligence",
-    industry: "Middle Market",
-    sourceDocs: [...DEFAULT_SOURCE_DOCS],
-    deliverStatus: "in_review",
-    skills: {
-      "trial-balance-ingestion": skill("complete", "May 18, 2026", "37 months parsed across 142 GL accounts.", [
-        { label: "Accounts", value: "142" },
-        { label: "Periods", value: "37 mo" },
-        { label: "File", value: "CohnReznick_TB_Input_v2.xlsx" },
-      ]),
-      "anomaly-detection": skill("complete", "May 19, 2026", "5 material flags — revenue, payroll, AR, margin.", [
-        { label: "Flags", value: "5" },
-        { label: "Threshold", value: "5%" },
-        { label: "Critical", value: "2" },
-      ]),
-      "driver-analysis": skill("complete", "May 19, 2026", "Cross-account drivers linked for all 5 anomalies.", [
-        { label: "Drivers", value: "5" },
-        { label: "AR/Revenue", value: "Linked" },
-        { label: "Confidence", value: "High" },
-      ]),
-      "follow-up-questions": skill("complete", "May 20, 2026", "12 management questions ranked by materiality.", [
-        { label: "Questions", value: "12" },
-        { label: "High priority", value: "4" },
-        { label: "Mgmt call", value: "Scheduled" },
-      ]),
-      "issue-tracker": skill("complete", "May 20, 2026", "5 issues logged — 2 HIGH, 1 MEDIUM, 1 LOW, 1 INFO.", [
-        { label: "Open issues", value: "5" },
-        { label: "HIGH", value: "2" },
-        { label: "Review sync", value: "Pending" },
-      ]),
-      "report-drafting": skill("pending", "—", "Awaiting approved anomalies before draft generation.", [
-        { label: "Template", value: "Word — Diligence" },
-        { label: "Approved", value: "0 / 4" },
-        { label: "Blocked by", value: "Anomaly review" },
-      ]),
-    },
-  },
-  {
-    id: "c2",
     clientName: "Horizon Logistics LLC",
     engagementType: "Financial Diligence",
     industry: "Transportation",
-    sourceDocs: [...DEFAULT_SOURCE_DOCS],
+    sourceDocs: ["TB_Horizon_FY25.csv"],
     deliverStatus: "draft",
     skills: {
       "trial-balance-ingestion": skill("complete", "May 15, 2026", "24 months ingested — freight revenue and fuel cost accounts normalized.", [
@@ -155,11 +120,11 @@ export const ENGAGEMENT_PROFILES: EngagementProfile[] = [
     },
   },
   {
-    id: "c3",
+    id: "c2",
     clientName: "Summit Retail Group",
     engagementType: "Quality of Earnings",
     industry: "Retail",
-    sourceDocs: [...DEFAULT_SOURCE_DOCS],
+    sourceDocs: ["TB_Summit_Q1-26.xlsx"],
     deliverStatus: "blocked",
     skills: {
       "trial-balance-ingestion": skill("in_progress", "May 21, 2026", "Q1 2026 upload in progress — store-level GL mapping pending.", [
@@ -195,11 +160,11 @@ export const ENGAGEMENT_PROFILES: EngagementProfile[] = [
     },
   },
   {
-    id: "c4",
+    id: "c3",
     clientName: "NorthBridge Manufacturing",
     engagementType: "Transaction Diligence",
     industry: "Industrial",
-    sourceDocs: [...DEFAULT_SOURCE_DOCS],
+    sourceDocs: ["TB_NorthBridge_36mo.xlsx"],
     deliverStatus: "ready",
     skills: {
       "trial-balance-ingestion": skill("complete", "May 10, 2026", "36 months — 168 manufacturing GL accounts with BOM cost centers.", [
@@ -244,7 +209,7 @@ export function getEngagementByName(name: string): EngagementProfile | undefined
 
 export function getSourceDocsForEngagement(clientName: string): string[] {
   const profile = getEngagementByName(clientName);
-  return profile?.sourceDocs ?? [...DEFAULT_SOURCE_DOCS];
+  return profile?.sourceDocs ?? [];
 }
 
 export function getEngagementSkillStatus(profile: EngagementProfile, skillId: SkillId): PipelineStatus {

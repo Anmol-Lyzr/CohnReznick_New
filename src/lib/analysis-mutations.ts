@@ -125,8 +125,10 @@ export function syncReportFromIssues(analysis: AdvisoryAnalysisOutput): Advisory
     source_refs: i.source_refs,
   }));
 
-  const executive_summary =
-    reportable.length === 0
+  const agentExecutive = analysis._agent_v2_raw?.report_summary?.executive_summary?.trim();
+  const executive_summary = agentExecutive
+    ? agentExecutive
+    : reportable.length === 0
       ? `No approved anomalies for ${normalized.engagement.client_name}. Complete anomaly review in Anomaly Detection before report drafting. (${pending} pending review)`
       : `Diligence report draft for ${normalized.engagement.client_name}: ${approved} approved finding${approved === 1 ? "" : "s"} from anomaly detection${pending > 0 ? ` (${pending} still pending review)` : ""}.`;
 
@@ -139,6 +141,16 @@ export function syncReportFromIssues(analysis: AdvisoryAnalysisOutput): Advisory
       issue_table,
       findings_detail,
     },
+  };
+}
+
+/** After live agent mapping — recalc stats only, keep agent-authored report body */
+export function finalizeAgentAnalysis(analysis: AdvisoryAnalysisOutput): AdvisoryAnalysisOutput {
+  if (!analysis._agent_v2_raw) return syncReportFromIssues(analysis);
+  const normalized = normalizeAnalysis(analysis);
+  return {
+    ...normalized,
+    summary_stats: recalculateSummaryStats(normalized),
   };
 }
 
