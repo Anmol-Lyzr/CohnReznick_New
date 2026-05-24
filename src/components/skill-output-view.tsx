@@ -19,12 +19,10 @@ import {
 import { useAdvisoryAnalysis } from "@/context/AdvisoryAnalysisProvider";
 import type {
   AdvisoryAnalysisOutput,
-  AgentResponseMeta,
   FollowUpQuestion,
   IssueLogEntry,
   Severity,
 } from "@/lib/advisory-output-types";
-import type { AgentV2Status } from "@/lib/advisory-agent-v2-types";
 import { badge, flag, stat, gradientAccent, gradientAccentBorder } from "@/lib/theme-classes";
 
 const SEVERITY_STYLES: Record<Severity, { bg: string; text: string; border: string }> = {
@@ -150,7 +148,6 @@ function AnomalyDetectionView({
 
   return (
     <div id="skill-output-review">
-      {data._agent_meta && <AgentResponseBanner meta={data._agent_meta} />}
       <OutputHeader
         analysis={data}
         skillTitle="Trend & Anomaly Detection"
@@ -665,7 +662,6 @@ function ReportDraftingView({ data }: { data: AdvisoryAnalysisOutput }) {
 
   return (
     <div>
-      {data._agent_meta && <AgentResponseBanner meta={data._agent_meta} />}
       <OutputHeader
         analysis={data}
         skillTitle="Diligence Report Draft"
@@ -738,12 +734,6 @@ function ReportDraftingView({ data }: { data: AdvisoryAnalysisOutput }) {
   );
 }
 
-const AGENT_STATUS_STYLES: Record<AgentV2Status, string> = {
-  success: "bg-success/10 text-success border-success/25",
-  warning: "bg-warning/15 text-warning border-warning/30",
-  error: "bg-destructive/12 text-destructive border-destructive/25",
-};
-
 function agentBadgeLabel(agentMode: "live" | "demo" | null | undefined, data: AdvisoryAnalysisOutput): string {
   if (data._agent_meta || data._agent_v2_raw) return "Live Lyzr Agent";
   if (agentMode === "live") return "Live Lyzr Agent";
@@ -757,46 +747,6 @@ function formatZScoreEstimate(issue: AdvisoryAnalysisOutput["issue_log"][0]): st
   return `${(Math.abs(issue.mom_pct_change) * 4.2).toFixed(1)}σ`;
 }
 
-function AgentResponseBanner({ meta }: { meta: AgentResponseMeta }) {
-  const statusStyle = AGENT_STATUS_STYLES[meta.status] ?? AGENT_STATUS_STYLES.success;
-  return (
-    <div className="mb-4 rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className={cn("inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase", statusStyle)}>
-          {meta.status}
-        </span>
-        <span className="text-xs font-semibold text-foreground">{meta.agent_name}</span>
-        <span className="text-[10px] text-muted-foreground">{meta.agent_role}</span>
-      </div>
-      {meta.audit_trail && (
-        <p className="text-[10px] text-muted-foreground">
-          Generated {new Date(meta.audit_trail.generated_timestamp).toLocaleString()} ·{" "}
-          {meta.audit_trail.generated_by}
-          {meta.file_name ? ` · ${meta.file_name}` : ""}
-        </p>
-      )}
-      {meta.cta_actions.length > 0 && (
-        <div className="flex flex-wrap gap-2 pt-1">
-          {meta.cta_actions.map((cta) => (
-            <button
-              key={cta.action}
-              type="button"
-              title={cta.description.join(" ")}
-              className={cn(
-                "text-[10px] font-semibold px-2.5 py-1 rounded-md border",
-                cta.variant === "primary"
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card text-foreground border-border/60"
-              )}
-            >
-              {cta.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function ExecutiveSummaryBlock({ summary }: { summary: string }) {
   if (!summary.trim()) return null;
@@ -817,7 +767,6 @@ function TrialBalanceView({ data }: { data: AdvisoryAnalysisOutput }) {
     (data._agent_v2_raw ? "Ingested — ready for anomaly detection" : "Ready for anomaly detection");
   return (
     <div>
-      {data._agent_meta && <AgentResponseBanner meta={data._agent_meta} />}
       <OutputHeader
         analysis={data}
         skillTitle="Trial Balance Normalization Summary"
