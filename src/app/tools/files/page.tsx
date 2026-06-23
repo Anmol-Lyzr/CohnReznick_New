@@ -54,7 +54,7 @@ const FILE_TREE: FileNode[] = [
     name: "templates/",
     type: "folder",
     children: [
-      { name: "CohnReznick_Diligence_Report_Template.docx", type: "file", size: "124 KB" },
+      { name: "Lyzr_Diligence_Report_Template.docx", type: "file", size: "124 KB" },
     ],
   },
 ];

@@ -52,10 +52,10 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center text-center min-h-[calc(100vh-6rem)]">
         <div className="mb-4 flex items-center gap-2.5">
           <Logo size={36} />
-          <span className="text-2xl font-semibold text-foreground">CohnReznick</span>
+          <span className="text-2xl font-semibold text-foreground">Lyzr</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-          Welcome, <span className="text-primary">Paul</span>
+          Welcome, <span className="text-primary">User</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-2 max-w-lg">
           {APP_METADATA.title} — {APP_METADATA.pocScope}

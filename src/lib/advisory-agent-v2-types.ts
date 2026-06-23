@@ -172,7 +172,7 @@ export interface AgentV2AuditTrail {
   source_traceability_enabled: boolean;
 }
 
-export interface CohnReznickAdvisoryAiAnalystOutput {
+export interface LyzrAdvisoryAiAnalystOutput {
   agent_name: string;
   agent_role: string;
   status: AgentV2Status;

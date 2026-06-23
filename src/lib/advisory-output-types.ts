@@ -4,7 +4,7 @@ import type {
   AgentV2AuditTrail,
   AgentV2CtaAction,
   AgentV2Status,
-  CohnReznickAdvisoryAiAnalystOutput,
+  LyzrAdvisoryAiAnalystOutput,
 } from "@/lib/advisory-agent-v2-types";
 
 export type ParseWarningType =
@@ -214,7 +214,7 @@ export interface AdvisoryAnalysisOutput {
   report: AdvisoryReport;
   summary_stats: SummaryStats;
   /** Raw Lyzr v2 payload when mapped from cohnreznick_advisory_ai_analyst */
-  _agent_v2_raw?: CohnReznickAdvisoryAiAnalystOutput;
+  _agent_v2_raw?: LyzrAdvisoryAiAnalystOutput;
   /** UI helpers derived from v2 response */
   _agent_meta?: AgentResponseMeta;
 }
