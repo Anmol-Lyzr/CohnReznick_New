@@ -10,7 +10,7 @@ const ARCHITECTURE_LAYERS = [
     color: "text-primary",
     bg: "bg-primary/10",
     files: ["SOUL.md", "RULES.md"],
-    description: "CohnReznick advisory agent — junior analyst persona with mandatory human review gates.",
+    description: "Lyzr advisory agent — junior analyst persona with mandatory human review gates.",
   },
   {
     title: "Skill Layer",

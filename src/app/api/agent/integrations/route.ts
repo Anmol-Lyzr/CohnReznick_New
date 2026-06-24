@@ -28,7 +28,7 @@ export async function GET() {
         name: "Report Templates",
         category: "output",
         status: "connected",
-        description: "CohnReznick Word/PPT diligence templates",
+        description: "Lyzr Word/PPT diligence templates",
         useInSkills: ["report-drafting"],
       },
       {

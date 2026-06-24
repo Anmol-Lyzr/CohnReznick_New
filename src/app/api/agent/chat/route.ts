@@ -48,7 +48,7 @@ Run **Driver Analysis** for cross-account explanations, or open **Anomaly Detect
 
 3 findings are pending approval. Approve, edit, or reject each anomaly in **Anomaly Detection** before report drafting.
 
-This is a mandatory gate per the CohnReznick PoC workflow (Steps 7 & 9).`;
+This is a mandatory gate per the Lyzr PoC workflow (Steps 7 & 9).`;
   }
 
   if (lower.includes("upload") || lower.includes("trial balance") || lower.includes("tb")) {
@@ -59,7 +59,7 @@ Upload trial-balance data (Excel/CSV) via **TB Ingestion** (/tools/skills/trial-
 PoC sample file: \`TB_Horizon_FY25.csv\` — use the **PoC Sample** toggle to load demo data.`;
   }
 
-  return `## CohnReznick Advisory Agent
+  return `## Lyzr Advisory Agent
 
 I can help with transaction diligence workflows:
 
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       };
 
-      send("phase", { phase: 1, name: "Context Loading", description: "Loading CohnReznick advisory agent context" });
+      send("phase", { phase: 1, name: "Context Loading", description: "Loading Lyzr advisory agent context" });
       await delay(200);
       send("skill_loading", { skill: "trial-balance-ingestion", action: "TB Ingestion skill available", isPrimary: true });
       await delay(150);

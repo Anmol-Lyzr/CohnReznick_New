@@ -8,8 +8,8 @@ const DOCUMENTS: Record<
   { filename: string; publicPath: string }
 > = {
   [POC_DOCUMENT_API_ID]: {
-    filename: "CohnReznick_Advisory_Agent_PoC.md",
-    publicPath: "documents/CohnReznick_Advisory_Agent_PoC.md",
+    filename: "Lyzr_Advisory_Agent_PoC.md",
+    publicPath: "documents/Lyzr_Advisory_Agent_PoC.md",
   },
 };
 
@@ -28,7 +28,7 @@ export async function GET(
     const content = readFileSync(filePath, "utf-8");
     return NextResponse.json({
       id,
-      title: "CohnReznick_Advisory_Agent_PoC.pdf",
+      title: "Lyzr_Advisory_Agent_PoC.pdf",
       filename: meta.filename,
       content,
     });

@@ -1,7 +1,7 @@
 /** Shared PoC design document — shown for every engagement */
-export const POC_SOURCE_DOCUMENT_FILENAME = "CohnReznick_Advisory_Agent_PoC.pdf";
+export const POC_SOURCE_DOCUMENT_FILENAME = "Lyzr_Advisory_Agent_PoC.pdf";
 
-export const POC_DOCUMENT_SLUG = "CohnReznick_Advisory_Agent_PoC";
+export const POC_DOCUMENT_SLUG = "Lyzr_Advisory_Agent_PoC";
 
 export const POC_DOCUMENT_API_ID = "poc-design-doc";
 
@@ -12,7 +12,7 @@ export function isExcludedEngagementSourceDoc(filename: string): boolean {
   return (
     filename === POC_SOURCE_DOCUMENT_FILENAME ||
     filename === POC_DOCUMENT_SLUG ||
-    filename === "CohnReznick_Advisory_Agent_PoC.md"
+    filename === "Lyzr_Advisory_Agent_PoC.md"
   );
 }
 
@@ -42,7 +42,7 @@ export function resolveSourceDocHref(
   if (
     filename === POC_SOURCE_DOCUMENT_FILENAME ||
     filename === POC_DOCUMENT_SLUG ||
-    filename === "CohnReznick_Advisory_Agent_PoC.md"
+    filename === "Lyzr_Advisory_Agent_PoC.md"
   ) {
     return `/documents/${POC_DOCUMENT_SLUG}`;
   }

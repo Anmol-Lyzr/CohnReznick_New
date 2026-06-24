@@ -24,11 +24,11 @@ const ROLE_CONFIG: Record<Role, { label: string; icon: React.ComponentType<{ cla
 };
 
 const INITIAL_USERS: User[] = [
-  { id: "u1", name: "Paul Johnson",     email: "paul.johnson@cohnreznick.com",  role: "Admin",  avatar: "PJ", lastActive: "Now",          isCurrentUser: true  },
-  { id: "u2", name: "Rahul Gattani",    email: "rahul.gattani@cohnreznick.com", role: "Admin",  avatar: "RG", lastActive: "2 hours ago"                        },
-  { id: "u3", name: "Sarah Chen",       email: "sarah.chen@cohnreznick.com",    role: "Editor", avatar: "SC", lastActive: "Yesterday"                          },
-  { id: "u4", name: "Michael Torres",   email: "michael.torres@cohnreznick.com", role: "Editor", avatar: "MT", lastActive: "3 days ago"                         },
-  { id: "u5", name: "Priya Patel",      email: "priya.patel@cohnreznick.com",   role: "Viewer", avatar: "PP", lastActive: "1 week ago"                         },
+  { id: "u1", name: "User",             email: "user@lyzr.ai",          role: "Admin",  avatar: "U",  lastActive: "Now",          isCurrentUser: true  },
+  { id: "u2", name: "Rahul Gattani",    email: "rahul.gattani@lyzr.ai", role: "Admin",  avatar: "RG", lastActive: "2 hours ago"                        },
+  { id: "u3", name: "Sarah Chen",       email: "sarah.chen@lyzr.ai",    role: "Editor", avatar: "SC", lastActive: "Yesterday"                          },
+  { id: "u4", name: "Michael Torres",   email: "michael.torres@lyzr.ai", role: "Editor", avatar: "MT", lastActive: "3 days ago"                         },
+  { id: "u5", name: "Priya Patel",      email: "priya.patel@lyzr.ai",   role: "Viewer", avatar: "PP", lastActive: "1 week ago"                         },
 ];
 
 const ROLE_PERMISSIONS: Record<Role, string[]> = {

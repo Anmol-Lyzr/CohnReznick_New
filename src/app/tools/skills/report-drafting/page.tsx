@@ -72,7 +72,7 @@ export default function ReportDrafting() {
     <JourneyLayout
       skillId="report-drafting"
       title="Report & Workpaper Drafting"
-      subtitle="Populate CohnReznick templates with approved anomaly findings"
+      subtitle="Populate Lyzr templates with approved anomaly findings"
       icon={FileText}
       state={state}
       onExecute={() =>

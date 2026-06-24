@@ -1,8 +1,8 @@
 export const APP_METADATA = {
-  title: "CohnReznick Advisory Agentic AI",
+  title: "Lyzr Advisory Agentic AI",
   description:
     "Agentic junior analyst prototype — 36-month trial-balance analysis with human-reviewed diligence output",
-  client: "CohnReznick LLP",
+  client: "Lyzr",
   product: "Agentic junior analyst prototype",
   version: "1.0",
   preparedBy: "Lyzr AI",
@@ -85,11 +85,11 @@ export const INTEGRATIONS = [
 ] as const;
 
 export const DEMO_USERS = [
-  { name: "Rahul Gattani", email: "rahul.gattani@cohnreznick.com", role: "Admin" as const },
-  { name: "Paul Johnson", email: "paul.johnson@cohnreznick.com", role: "Admin" as const },
-  { name: "Sarah Chen", email: "sarah.chen@cohnreznick.com", role: "Editor" as const },
-  { name: "Michael Torres", email: "michael.torres@cohnreznick.com", role: "Editor" as const },
-  { name: "Priya Patel", email: "priya.patel@cohnreznick.com", role: "Viewer" as const },
+  { name: "Rahul Gattani", email: "rahul.gattani@lyzr.ai", role: "Admin" as const },
+  { name: "User", email: "user@lyzr.ai", role: "Admin" as const },
+  { name: "Sarah Chen", email: "sarah.chen@lyzr.ai", role: "Editor" as const },
+  { name: "Michael Torres", email: "michael.torres@lyzr.ai", role: "Editor" as const },
+  { name: "Priya Patel", email: "priya.patel@lyzr.ai", role: "Viewer" as const },
 ];
 
 export const DEMO_ENGAGEMENT = {

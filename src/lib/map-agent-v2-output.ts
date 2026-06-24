@@ -1,7 +1,7 @@
 import type {
   AgentV2Finding,
   AgentV2ManagementQuestion,
-  CohnReznickAdvisoryAiAnalystOutput,
+  LyzrAdvisoryAiAnalystOutput,
   LegacyAgentV2Output,
 } from "@/lib/advisory-agent-v2-types";
 import type {
@@ -137,7 +137,7 @@ function buildQuestionAgenda(issue_log: IssueLogEntry[]): QuestionAgenda {
 }
 
 function buildReportFromAgent(
-  v2: CohnReznickAdvisoryAiAnalystOutput,
+  v2: LyzrAdvisoryAiAnalystOutput,
   issue_log: IssueLogEntry[]
 ): AdvisoryReport {
   const rs = v2.report_summary;
@@ -172,7 +172,7 @@ function buildReportFromAgent(
   return report;
 }
 
-export function isAgentV2Output(value: unknown): value is CohnReznickAdvisoryAiAnalystOutput {
+export function isAgentV2Output(value: unknown): value is LyzrAdvisoryAiAnalystOutput {
   if (!value || typeof value !== "object") return false;
   const obj = value as Record<string, unknown>;
   return (
@@ -186,7 +186,7 @@ export function isAgentV2Output(value: unknown): value is CohnReznickAdvisoryAiA
 }
 
 /** Accept extended or legacy agent JSON */
-export function normalizeAgentV2Payload(raw: unknown): CohnReznickAdvisoryAiAnalystOutput | null {
+export function normalizeAgentV2Payload(raw: unknown): LyzrAdvisoryAiAnalystOutput | null {
   if (isAgentV2Output(raw)) return raw;
 
   const legacy = raw as LegacyAgentV2Output;
@@ -321,7 +321,7 @@ export interface MapAgentV2Options {
 }
 
 export function mapAgentV2ToAdvisoryAnalysis(
-  v2: CohnReznickAdvisoryAiAnalystOutput,
+  v2: LyzrAdvisoryAiAnalystOutput,
   options: MapAgentV2Options
 ): AdvisoryAnalysisOutput {
   const { clientName, fileName } = options;

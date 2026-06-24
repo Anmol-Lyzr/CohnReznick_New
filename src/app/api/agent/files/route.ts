@@ -9,13 +9,13 @@ const demoClient = DEMO_ENGAGEMENT.client;
 function loadPocDesignDoc(): string {
   const filePath = path.join(
     process.cwd(),
-    "public/documents/CohnReznick_Advisory_Agent_PoC.md"
+    "public/documents/Lyzr_Advisory_Agent_PoC.md"
   );
   return readFileSync(filePath, "utf-8");
 }
 
 const FILE_STUBS: Record<string, string> = {
-  "knowledge/docs/diligence-methodology.md": `# CohnReznick Diligence Methodology
+  "knowledge/docs/diligence-methodology.md": `# Lyzr Diligence Methodology
 
 ## Transaction Advisory Approach
 Our transaction advisory practice applies structured financial diligence across trial-balance data, supporting workpapers, and management representations.
@@ -30,9 +30,9 @@ Our transaction advisory practice applies structured financial diligence across 
 ## Human-in-the-Loop Requirements
 No finding reaches client delivery without explicit advisory team approval.`,
 
-  "SOUL.md": `# Agent Identity — CohnReznick Advisory Agent
+  "SOUL.md": `# Agent Identity — Lyzr Advisory Agent
 
-You are an agentic junior analyst for CohnReznick transaction advisory engagements.
+You are an agentic junior analyst for Lyzr transaction advisory engagements.
 Execute multi-step diligence workflows autonomously while preserving human judgment at every client-facing step.`,
 
   "RULES.md": `# Agent Rules
@@ -47,7 +47,7 @@ Execute multi-step diligence workflows autonomously while preserving human judgm
 **Client:** ${demoClient} (PoC)
 **Engagement Type:** ${DEMO_ENGAGEMENT.type}
 **Period:** 24 months (Jan 2024 – Dec 2025)
-**Lead:** Paul Johnson
+**Lead:** User
 
 ## Objectives
 1. Analyze trial-balance trends for material anomalies
@@ -64,8 +64,8 @@ Execute multi-step diligence workflows autonomously while preserving human judgm
 };
 
 const POC_DOC_PATHS = new Set([
-  "documents/CohnReznick_Advisory_Agent_PoC.md",
-  "documents/CohnReznick_Advisory_Agent_PoC.pdf",
+  "documents/Lyzr_Advisory_Agent_PoC.md",
+  "documents/Lyzr_Advisory_Agent_PoC.pdf",
 ]);
 
 export async function GET(req: NextRequest) {
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     try {
       content = loadPocDesignDoc();
     } catch {
-      content = `# CohnReznick Advisory Agent PoC\n\nDocument file not found on server.`;
+      content = `# Lyzr Advisory Agent PoC\n\nDocument file not found on server.`;
     }
   }
   if (!content) {
